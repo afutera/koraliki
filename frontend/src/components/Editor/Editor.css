@@ -4,12 +4,12 @@
     display: flex;
 }
 .editPanel{
-    width: 25%;
+    width: 30%;
     display: inline-block;
     background-color: lavender;
 }
 .editCanvas{
-    width: 73%;
+    width: 68%;
     height: 100%;
     border: 2px solid black;
     display: inline-block;

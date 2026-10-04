@@ -4,6 +4,7 @@ import type {Bead, Pattern, ShortColor} from "@interfaces/pattern"
 import EditPanel from "./EditPanel.tsx"
 import { useState } from "react"
 import { type EditorTools } from "@interfaces/enums.ts"
+import {imageDimensionsFromStream} from 'image-dimensions';
 
 const Editor = ({pattern}:{pattern: Pattern})=>{
     const [_pattern, setPattern] = useState(pattern)
@@ -112,6 +113,19 @@ const Editor = ({pattern}:{pattern: Pattern})=>{
     const SetNewStartPoint = (x: number, y: number)=>{
         setScale({...scale, startx: x, starty:y})
     }
+    const AddPicture = async (f: File)=>{
+        var dims= await imageDimensionsFromStream(f.stream())
+        if(dims===undefined) return
+        _pattern.pictures.push({
+            x: 0,
+            y: 0,
+            isLocal: true,
+            name: f.name,
+            scale: Math.min(pattern.height/dims.height,pattern.width/dims.width),
+            url: URL.createObjectURL(f)
+        })
+        setPattern({..._pattern})
+    }
 
     const onClickBead = (a: number)=>{
         switch(currentTool){
@@ -181,7 +195,7 @@ const Editor = ({pattern}:{pattern: Pattern})=>{
 
     return(
         <div className="editor">
-            <EditPanel pattern={_pattern} activeColor={currentColor} activeTool={currentTool}
+            <EditPanel pattern={_pattern} activeColor={currentColor} activeTool={currentTool} onAddPicture={AddPicture}
             onColorChange={onColorChange} onToolChange={onToolChange} onNewColor={onColorAdded} onRename={onRename} onSetPublic={onPublic}/>
             <EditCanvas pattern={_pattern} onClickBeadLayer={onClickBead} onMouseUpDown={onMouseUpDown} scale={scale} drag={currentTool=="Drag"} onScroll={SetNewStartPoint}/>
         </div>

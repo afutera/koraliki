@@ -1,7 +1,7 @@
 import type { ShortColor, BgPicture, Pattern } from "@interfaces/pattern"
 import type { PaletteHeader } from "@interfaces/palette"
 import { type EditorTools, isEditorTool } from "@interfaces/enums"
-import { useEffect, useState, type ChangeEvent, type MouseEvent } from "react"
+import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent } from "react"
 import { isBackendError } from "@interfaces/errors"
 import MockEditorPaletteService from "../../services/MockEditorPaletteService"
 
@@ -13,7 +13,8 @@ interface EditPanelProps{
     onToolChange: (tool: EditorTools)=>void,
     onNewColor: (color: ShortColor) =>void,
     onRename: (name: string)=>void,
-    onSetPublic: (isPublic: boolean) => void
+    onSetPublic: (isPublic: boolean) => void,
+    onAddPicture: (file: File) => void
 }
 
 const toolBtns: {tool: EditorTools, txt: string}[] = [{tool: "Drag", txt: "Przesuwanie"},{tool: "ZoomIn", txt: "Przybliż"},{tool: "ZoomOut", txt: "Oddal"},{tool: "Save", txt: "Zapisz"},
@@ -21,7 +22,7 @@ const toolBtns: {tool: EditorTools, txt: string}[] = [{tool: "Drag", txt: "Przes
         {tool: "ImgDrag", txt: "Przesuń"},{tool: "ImgScale", txt: "Skaluj"},{tool: "ImgDelete", txt: "Usuń"}
 ]
 
-const EditPanel = ({pattern, activeColor, activeTool, onColorChange, onToolChange, onNewColor, onRename, onSetPublic}:EditPanelProps) =>{
+const EditPanel = ({pattern, activeColor, activeTool, onColorChange, onToolChange, onNewColor, onRename, onSetPublic, onAddPicture}:EditPanelProps) =>{
 
     const colorIndex = Math.max(pattern.colors.findIndex(x=>x.index==activeColor.index),0)
     const [palettes, setPalettes] = useState<Array<PaletteHeader>>([])
@@ -29,7 +30,8 @@ const EditPanel = ({pattern, activeColor, activeTool, onColorChange, onToolChang
     const [paletteColors, setPaletteColors] = useState<Array<ShortColor>>([])
     const [activePaletteColor, setActivePaletteColor] = useState<number>(-1)
     const [error, setError] = useState<string|null>(null)
-    //const [nameInputValue, setnameInputValue] = useState<string>(pattern.title)
+    const [file, setFile] = useState<File|null>(null)
+    const fileinputref=useRef<HTMLInputElement>(null)
 
     useEffect(()=>{
         var p=MockEditorPaletteService.GetPalettes();
@@ -112,6 +114,24 @@ const EditPanel = ({pattern, activeColor, activeTool, onColorChange, onToolChang
         }
         onSetPublic(c)
     }
+    const ReadLoadedFile=(e: ChangeEvent<HTMLInputElement>)=>{
+        if(e.target.files===null||e.target.files.length===0) setFile(null)
+        else setFile(e.target.files[0])
+    }
+    const onClickAddFile=()=>{
+        console.log("proba dodania pliku, plik: ",file)
+        if(file===null) return
+        else {
+            if(file.type!=".png"&&file.type!=".jpg"&&file.type!=".jpeg"&&file.type!="image/png"&&file.type!="image/jpeg"){
+                setError("Nieprawidłowy typ (dozwolone: PNG i JPG)!")
+                return;
+            }
+            setError("");
+            onAddPicture(file)
+            setFile(null)
+            fileinputref.current!.value=""
+        }
+    }
 
     return (<div className="editPanel">
         <p>Tytuł:<input type="text" value={pattern.title} onChange={onNameChanged}/></p>
@@ -148,6 +168,16 @@ const EditPanel = ({pattern, activeColor, activeTool, onColorChange, onToolChang
         <span style={{border:"1px solid black", backgroundColor: activePaletteColor==-1 ? "white":paletteColors[activePaletteColor].rgb}}>&nbsp;&nbsp;&nbsp;&nbsp;</span>
         <button disabled={palettes.length==0 || paletteColors.length==0} onClick={onNewColorAdded}>Dodaj</button>
         <p>Obrazy:</p>
+        <p>Dodaj nowy: <input type={"file"} onChange={ReadLoadedFile} ref={fileinputref} accept={".png,.jpg,.jpeg,image/jpeg,image.png"}/> <button onClick={onClickAddFile}>Dodaj</button></p>
+        <table>
+            <tbody>
+                {
+                pattern.pictures.map((x,i)=><tr key={i}>
+                    <td>{x.name}</td><td><button id={"pic"+i}>Usuń</button></td>
+                </tr>)
+                }
+            </tbody>
+        </table>
         <p className="error">{error??""}</p>
     </div>)
 }

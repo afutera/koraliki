@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, type ComponentProps } from 'react'
 import type { EditorLayers } from '@interfaces/enums'
 import Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
+import ArrayImage from './ArrayImage'
 
 const EditCanvas = ({pattern, scale, onClickBeadLayer, onMouseUpDown, drag, onScroll}:{pattern:Pattern, scale: {startx: number, starty: number, scale: number, }
     onClickBeadLayer: (coords: number)=>void, onMouseUpDown: (mouseDown:boolean, coords: number)=>void, drag: boolean, onScroll: (x:number,y:number)=>void})=>{
@@ -81,7 +82,6 @@ const EditCanvas = ({pattern, scale, onClickBeadLayer, onMouseUpDown, drag, onSc
         return () => {window.removeEventListener('resize', newSize);};
     }, []);
 
-
     const Point2Bead: (mousePos: {x: number, y:number})=>number = (mousePos: {x: number, y:number}) => {
         if(mousePos.x<rulerwidth||mousePos.y<rulerwidth||mousePos.x>rulerwidth+size.patternw||mousePos.y>=rulerwidth+size.patternh) return -1
         const x=Math.floor((mousePos.x-rulerwidth+scale.startx*2*size.beadRadius)/size.beadRadius/2)
@@ -152,7 +152,10 @@ const EditCanvas = ({pattern, scale, onClickBeadLayer, onMouseUpDown, drag, onSc
         <div ref={containerRef} className="editCanvas">
         <Stage x={0} y={0} height={size.height} width={size.width} ref={stageRef} draggable={drag} onDragMove={StageDrag} onDragEnd={StageDragEnd}
         onPointerClick={onClick} onMouseDown={onMouseDown} onTouchStart={onMouseDown} onMouseUp={onMouseUp} onTouchEnd={onMouseUp} onMouseMove={onMouseMove} onTouchMove={onMouseMove} onMouseEnter={onMouseEnter}>
-            <Layer x={rulerwidth-scale.startx*2*size.beadRadius} y={rulerwidth-scale.starty*2*size.beadRadius}>
+            <Layer x={rulerwidth-scale.startx*2*size.beadRadius} y={rulerwidth-scale.starty*2*size.beadRadius} scaleX={size.beadRadius} scaleY={size.beadRadius}>
+                {pattern.pictures.map((img,i)=><ArrayImage key={img.name+i} x={img.x} y={img.y} scale={img.scale} url={img.url}/>)}
+            </Layer>
+            <Layer x={rulerwidth-scale.startx*2*size.beadRadius} y={rulerwidth-scale.starty*2*size.beadRadius} listening={false}>
                 {
                     size.beadRadius<=2 ? [...pattern.beads].map(([coords,color],k)=>
                     <Rect key={k} y={Math.floor(coords/pattern.width)*size.beadRadius*2+size.beadRadius} x={(coords%pattern.width)*size.beadRadius*2+size.beadRadius} height={size.beadRadius*2} width={size.beadRadius*2}
@@ -161,12 +164,12 @@ const EditCanvas = ({pattern, scale, onClickBeadLayer, onMouseUpDown, drag, onSc
                     <Circle key={k} y={Math.floor(coords/pattern.width)*size.beadRadius*2+size.beadRadius} x={(coords%pattern.width)*size.beadRadius*2+size.beadRadius} radius={size.beadRadius} 
                   fill={pattern.colors.find(x=>x.index==color)?.rgb} strokeWidth={pattern.colors.find(x=>x.index==color)?.needsBorder ? 1:0} stroke={"black"}/>)
                 }
+                <Rect x={(pattern.width)*2*size.beadRadius} y={0} height={size.height} width={size.width-(pattern.width-scale.startx)*2*size.beadRadius-rulerwidth} fill="#a0a0a0"/>
+                <Rect y={(pattern.height)*2*size.beadRadius} x={0} width={size.width} height={size.height-(pattern.height-scale.starty)*2*size.beadRadius-rulerwidth} fill="#a0a0a0"/>
             </Layer>
-            <Layer>
+            <Layer listening={false}>
                 <Rect x={0} y={0} height={rulerwidth} width={size.width} fill="#a0a0a0"/>
                 <Rect x={0} y={0} width={rulerwidth} height={size.height} fill="#a0a0a0"/>
-                <Rect x={(pattern.width-scale.startx)*2*size.beadRadius+rulerwidth} y={0} height={size.height} width={size.width-(pattern.width-scale.startx)*2*size.beadRadius-rulerwidth} fill="#a0a0a0"/>
-                <Rect y={(pattern.height-scale.starty)*2*size.beadRadius+rulerwidth} x={0} width={size.width} height={size.height-(pattern.height-scale.starty)*2*size.beadRadius-rulerwidth} fill="#a0a0a0"/>
                 {scrollbar.vvisible && <Rect x={rulerwidth+size.patternw} y={0} height={size.height} width={scrollwidth+scrollpadding} fill="#a0a0a0"/>}
                 {scrollbar.hvisible && <Rect y={rulerwidth+size.patternh} x={0} width={size.width} height={scrollwidth+scrollpadding} fill="#a0a0a0"/>}
                 {

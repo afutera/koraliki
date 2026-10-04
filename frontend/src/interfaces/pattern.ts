@@ -14,6 +14,7 @@ interface Bead {
 interface BgPicture {
     x: number,
     y: number,
+    name: string,
     isLocal: boolean
     scale: number
     url: string,
