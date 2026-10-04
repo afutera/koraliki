@@ -1,0 +1,23 @@
+.editor{
+    width: 100%;
+    height: 95%;
+    display: flex;
+}
+.editPanel{
+    width: 25%;
+    display: inline-block;
+    background-color: lavender;
+}
+.editCanvas{
+    width: 73%;
+    height: 100%;
+    border: 2px solid black;
+    display: inline-block;
+    padding: 0;
+}
+.error{
+    color: red;
+}
+.activeToolBtn{
+    background: cornflowerblue
+}
