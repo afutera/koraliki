@@ -1,6 +1,6 @@
 import type { ShortColor, BgPicture, Pattern } from "@interfaces/pattern"
 import type { PaletteHeader } from "@interfaces/palette"
-import { type EditorTools, isEditorTool } from "@interfaces/enums"
+import { type EditorTools, isEditorTool, type EditorLayers } from "@interfaces/enums"
 import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent } from "react"
 import { isBackendError } from "@interfaces/errors"
 import MockEditorPaletteService from "../../services/MockEditorPaletteService"
@@ -9,12 +9,16 @@ interface EditPanelProps{
     pattern: Pattern,
     activeColor: ShortColor,
     activeTool: EditorTools,
+    activeLayer: EditorLayers,
     onColorChange: (color: ShortColor)=>void, 
     onToolChange: (tool: EditorTools)=>void,
     onNewColor: (color: ShortColor) =>void,
     onRename: (name: string)=>void,
     onSetPublic: (isPublic: boolean) => void,
-    onAddPicture: (file: File) => void
+    onAddPicture: (file: File) => void,
+    onDeletePicture: (file: BgPicture) => void,
+    onChangeLayer : (layer: EditorLayers) => void,
+    onSaveBtnClicked: ()=>void
 }
 
 const toolBtns: {tool: EditorTools, txt: string}[] = [{tool: "Drag", txt: "Przesuwanie"},{tool: "ZoomIn", txt: "Przybliż"},{tool: "ZoomOut", txt: "Oddal"},{tool: "Save", txt: "Zapisz"},
@@ -22,7 +26,7 @@ const toolBtns: {tool: EditorTools, txt: string}[] = [{tool: "Drag", txt: "Przes
         {tool: "ImgDrag", txt: "Przesuń"},{tool: "ImgScale", txt: "Skaluj"},{tool: "ImgDelete", txt: "Usuń"}
 ]
 
-const EditPanel = ({pattern, activeColor, activeTool, onColorChange, onToolChange, onNewColor, onRename, onSetPublic, onAddPicture}:EditPanelProps) =>{
+const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange, onToolChange, onNewColor, onRename, onSetPublic, onAddPicture, onDeletePicture, onChangeLayer, onSaveBtnClicked}:EditPanelProps) =>{
 
     const colorIndex = Math.max(pattern.colors.findIndex(x=>x.index==activeColor.index),0)
     const [palettes, setPalettes] = useState<Array<PaletteHeader>>([])
@@ -80,8 +84,12 @@ const EditPanel = ({pattern, activeColor, activeTool, onColorChange, onToolChang
 
     const onToolClicked = (e:MouseEvent<HTMLButtonElement>)=>{
         e.preventDefault();
-        if(isEditorTool(e.currentTarget.id))
+        if(e.currentTarget.id==="Save") onSaveBtnClicked()
+        else if(isEditorTool(e.currentTarget.id)){
             onToolChange(e.currentTarget.id)
+            if(e.currentTarget.id=="ImgDrag"||e.currentTarget.id=="ImgScale"||e.currentTarget.id=="ImgDelete") onChangeLayer("Images")
+            else if(e.currentTarget.id=="Pencil"||e.currentTarget.id=="Drag"||e.currentTarget.id=="Fill"||e.currentTarget.id=="Erase") onChangeLayer("Beads")
+        }
     }
     const onPaletteChanged = (e:ChangeEvent<HTMLSelectElement>) =>{
         e.preventDefault();
@@ -119,9 +127,12 @@ const EditPanel = ({pattern, activeColor, activeTool, onColorChange, onToolChang
         else setFile(e.target.files[0])
     }
     const onClickAddFile=()=>{
-        console.log("proba dodania pliku, plik: ",file)
         if(file===null) return
         else {
+            if(pattern.pictures.length>=3){
+                setError("Maksymalnie 3 obrazy.")
+                return
+            }
             if(file.type!=".png"&&file.type!=".jpg"&&file.type!=".jpeg"&&file.type!="image/png"&&file.type!="image/jpeg"){
                 setError("Nieprawidłowy typ (dozwolone: PNG i JPG)!")
                 return;
@@ -132,8 +143,19 @@ const EditPanel = ({pattern, activeColor, activeTool, onColorChange, onToolChang
             fileinputref.current!.value=""
         }
     }
+    const OnClickDeleteFile = (e: MouseEvent<HTMLButtonElement>) =>{
+        if(e.currentTarget.id.substring(0,3)==="pic"){
+            const nr=Number.parseInt(e.currentTarget.id.substring(3))
+            if(pattern.pictures.length>nr) onDeletePicture(pattern.pictures[nr])
+        }
+    }
+    const onClickLayerChange = (e: MouseEvent<HTMLButtonElement>) =>{
+        onChangeLayer(e.currentTarget.id=="imgLayerBtn" ? "Images":"Beads")
+    }
 
     return (<div className="editPanel">
+        <p>Warstwy: <button id="imgLayerBtn" className={activeLayer=="Images"?"activeToolBtn":""} onClick={onClickLayerChange}>Obrazy</button>
+        <button id="beadLayerBtn" className={activeLayer=="Beads"?"activeToolBtn":""} onClick={onClickLayerChange}>Koraliki</button></p>
         <p>Tytuł:<input type="text" value={pattern.title} onChange={onNameChanged}/></p>
         <p>Publiczny:<input type="checkbox" checked={pattern.isPublic} onChange={onPublicChanged}/></p>
         <p>Narzędzia:</p>
@@ -145,10 +167,9 @@ const EditPanel = ({pattern, activeColor, activeTool, onColorChange, onToolChang
             toolBtns.slice(4,8).map(x=><button id={x.tool} key={"btn"+x.tool} onClick={onToolClicked} className={activeTool==x.tool?"activeToolBtn":""}>{x.txt}</button>)
         }
         <p>Narzędzia obrazów:</p>
-        <button disabled>Przesuń</button>
-        <button disabled>Skaluj</button>
-        <button disabled>Usun</button>
-        <button disabled>Nowy</button>
+        {
+            toolBtns.slice(8,11).map(x=><button id={x.tool} key={"btn"+x.tool} onClick={onToolClicked} className={activeTool==x.tool?"activeToolBtn":""}>{x.txt}</button>)
+        }
         <p>Kolory, wersja tymaczasowa bez palet z bazy:</p>
         <button disabled={colorIndex<=0} onClick={onColorArrowsClick} id="kolorWstecz">&lt;-</button>
         {
@@ -168,12 +189,12 @@ const EditPanel = ({pattern, activeColor, activeTool, onColorChange, onToolChang
         <span style={{border:"1px solid black", backgroundColor: activePaletteColor==-1 ? "white":paletteColors[activePaletteColor].rgb}}>&nbsp;&nbsp;&nbsp;&nbsp;</span>
         <button disabled={palettes.length==0 || paletteColors.length==0} onClick={onNewColorAdded}>Dodaj</button>
         <p>Obrazy:</p>
-        <p>Dodaj nowy: <input type={"file"} onChange={ReadLoadedFile} ref={fileinputref} accept={".png,.jpg,.jpeg,image/jpeg,image.png"}/> <button onClick={onClickAddFile}>Dodaj</button></p>
+        <p>Dodaj nowy: <input type={"file"} onChange={ReadLoadedFile} ref={fileinputref} accept={".png,.jpg,.jpeg,image/jpeg,image.png"}/> <button onClick={onClickAddFile} disabled={pattern.pictures.length>=3}>Dodaj</button></p>
         <table>
             <tbody>
                 {
                 pattern.pictures.map((x,i)=><tr key={i}>
-                    <td>{x.name}</td><td><button id={"pic"+i}>Usuń</button></td>
+                    <td>{x.name}</td><td><button id={"pic"+i} onClick={OnClickDeleteFile}>Usuń</button></td>
                 </tr>)
                 }
             </tbody>

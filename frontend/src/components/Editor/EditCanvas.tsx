@@ -1,25 +1,28 @@
-import {Stage, Layer, Circle, Line, Rect, Text} from 'react-konva'
-import type {Pattern} from '@interfaces/pattern'
+import {Stage, Layer, Circle, Line, Rect, Text, Transformer} from 'react-konva'
+import type {BgPicture, Pattern} from '@interfaces/pattern'
 import { useState, useRef, useEffect, type ComponentProps } from 'react'
 import type { EditorLayers } from '@interfaces/enums'
 import Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import ArrayImage from './ArrayImage'
 
-const EditCanvas = ({pattern, scale, onClickBeadLayer, onMouseUpDown, drag, onScroll}:{pattern:Pattern, scale: {startx: number, starty: number, scale: number, }
-    onClickBeadLayer: (coords: number)=>void, onMouseUpDown: (mouseDown:boolean, coords: number)=>void, drag: boolean, onScroll: (x:number,y:number)=>void})=>{
+const EditCanvas = ({pattern, scale, layer, onClickBeadLayer, onMouseUpDown, drag, onScroll, imgDrag, imgScale, onImgMoved}:{pattern:Pattern, scale: {startx: number, starty: number, scale: number}, layer: EditorLayers
+    onClickBeadLayer: (coords: number)=>void, onMouseUpDown: (mouseDown:boolean, coords: number)=>void, drag: boolean, onScroll: (x:number,y:number)=>void, imgDrag: boolean, imgScale: boolean,
+onImgMoved: (f: BgPicture, x: number, y: number, scale: number)=>void})=>{
 
     const rulerwidth=20, scrollwidth= 10, scrollpadding=5
     const  [size,setSize]=useState({beadRadius: 1, width: pattern.width, height: pattern.height, patternw: pattern.height, patternh: pattern.height})
     const containerRef = useRef<HTMLDivElement|null>(null);
     const stageRef: ComponentProps<typeof Stage>["ref"]= useRef(null);
     const [grid, SetGrid] = useState<Array<{axis: string, text: string, coord: number}>>([]) //linie siatki
-    const [layer, setLayer] = useState<EditorLayers>("Beads");
     const mouseDown=useRef(false)
-    const [lastBead, setLastBead] = useState(-1)
-    const [stagePos,setStagePos]=useState({x:0,y:0}) //React nie resetuje pozycji w dragu
+    const lastBead = useRef(-1)
+    const stagePos=useRef({x:0,y:0}) //React nie resetuje pozycji w dragu
     const [scrollbar,setScrollbar] = useState({hpos: scrollpadding, vpos:scrollpadding, hlen:pattern.width, vlen: pattern.height, hvisible: false, vvisible: false})
     const scaleRef = useRef<number>(0)
+    const transformer: ComponentProps<typeof Transformer>["ref"]=useRef(null)
+    const imgRefs=useRef(new Map<BgPicture,any>())
+    const [selectedImg, setSelectedImg] = useState<BgPicture|null>(null)
 
     const newSize = ()=>{
         scaleRef.current=scale.scale
@@ -94,6 +97,11 @@ const EditCanvas = ({pattern, scale, onClickBeadLayer, onMouseUpDown, drag, onSc
     }
 
     const onClick = (e: KonvaEventObject<MouseEvent>)=>{
+        //if(layer!="Beads") return
+        if(layer=="Images" && imgScale){
+            setSelectedImg(null)
+            return
+        }
         if(e.target.id()==="hScrollbar"||e.target.id()==="vScrollbar") return
         const mousePos=stageRef.current?.getPointerPosition();
         if(mousePos===undefined || mousePos==null) return
@@ -101,30 +109,34 @@ const EditCanvas = ({pattern, scale, onClickBeadLayer, onMouseUpDown, drag, onSc
         if(bead>-1) onClickBeadLayer(bead)
     }
     const onMouseDown = (e: KonvaEventObject<MouseEvent> | KonvaEventObject<TouchEvent>) =>{
+        if(layer!="Beads") return
         const mousePos=stageRef.current?.getPointerPosition();
         if(mousePos===undefined || mousePos==null) return
         const bead=Point2Bead(mousePos)
         mouseDown.current=true
-        setLastBead(bead)
+        lastBead.current=bead
         if(!(e.target.id()==="hScrollbar"||e.target.id()==="vScrollbar")) onMouseUpDown(true, bead)
     }
     const onMouseUp = (e: KonvaEventObject<MouseEvent> | KonvaEventObject<TouchEvent>) =>{
+        if(layer!="Beads") return
         const mousePos=stageRef.current?.getPointerPosition();
         if(mousePos===undefined || mousePos==null) return
         const bead=Point2Bead(mousePos)
         mouseDown.current=false
-        setLastBead(-1)
+        lastBead.current=-1
         if(!(e.target.id()==="hScrollbar"||e.target.id()==="vScrollbar")) onMouseUpDown(false, bead)
     }
     const onMouseMove = () =>{
+        if(layer!="Beads") return
         if(mouseDown.current===false) return
         const mousePos=stageRef.current?.getPointerPosition();
         if(mousePos===undefined || mousePos==null) return
         const bead=Point2Bead(mousePos)
-        if(bead!=lastBead) setLastBead(bead)
+        if(bead!=lastBead.current) lastBead.current=bead
         if(bead!=-1) onClickBeadLayer(bead)
     }
     const onMouseEnter = (e: KonvaEventObject<MouseEvent>)=>{
+        if(layer!="Beads") return
         const mousedown=e.evt.buttons%2==1
         if(mousedown) onMouseDown(e)
         else onMouseUp(e)
@@ -132,13 +144,13 @@ const EditCanvas = ({pattern, scale, onClickBeadLayer, onMouseUpDown, drag, onSc
     const StageDrag = (e: KonvaEventObject<DragEvent>)=>{
         if(e.target.id()==="hScrollbar"||e.target.id()==="vScrollbar") return
         const pos=e.currentTarget.absolutePosition()
-        const x=Math.max(Math.min((stagePos.x-pos.x)/(2*size.beadRadius)+scale.startx,pattern.width-(size.patternw)/(2*size.beadRadius)),0)
-        const y=Math.max(Math.min((stagePos.y-pos.y)/(2*size.beadRadius)+scale.starty,pattern.height-(size.patternh)/(2*size.beadRadius)),0)
-        setStagePos(pos)
+        const x=Math.max(Math.min((stagePos.current.x-pos.x)/(2*size.beadRadius)+scale.startx,pattern.width-(size.patternw)/(2*size.beadRadius)),0)
+        const y=Math.max(Math.min((stagePos.current.y-pos.y)/(2*size.beadRadius)+scale.starty,pattern.height-(size.patternh)/(2*size.beadRadius)),0)
+        stagePos.current=pos
         e.currentTarget.setAbsolutePosition({x:0,y:0})
         onScroll(x,y)
     }
-    const StageDragEnd= ()=>{setStagePos({x: 0, y:0})}
+    const StageDragEnd= ()=>{stagePos.current={x: 0, y:0}}
     const OnHScrollbarMove = (e: Konva.KonvaEventObject<DragEvent>)=>{
         var pos=e.currentTarget.position()
         onScroll((pos.x-scrollpadding)/(size.width-2*scrollpadding-scrollwidth)*pattern.width,scale.starty)
@@ -147,29 +159,51 @@ const EditCanvas = ({pattern, scale, onClickBeadLayer, onMouseUpDown, drag, onSc
         var pos=e.currentTarget.position()
         onScroll(scale.startx,(pos.y-scrollpadding)/(size.height-2*scrollpadding-scrollwidth)*pattern.height)
     }
+    const onImgDrag =(i: BgPicture, x: number,y: number, scale: number)=>{
+        if(layer=="Images"){
+            if(imgDrag) onImgMoved(i, x, y, i.scale)
+            else if(imgScale) onImgMoved(i, x, y, scale)
+        } 
+    }
+    useEffect(()=>{
+        if(!imgScale) setSelectedImg(null)
+    },[imgScale])
+    useEffect(()=>{
+        if(transformer.current){
+            if(selectedImg==null) transformer.current.nodes([])
+            else transformer.current.nodes([imgRefs.current.get(selectedImg)])
+        }
+    },[selectedImg])
+    const onImgClick = (i: BgPicture) =>{
+        if(layer=="Images" && imgScale){
+            setSelectedImg(i)
+        }
+    }
 
     return(
         <div ref={containerRef} className="editCanvas">
         <Stage x={0} y={0} height={size.height} width={size.width} ref={stageRef} draggable={drag} onDragMove={StageDrag} onDragEnd={StageDragEnd}
         onPointerClick={onClick} onMouseDown={onMouseDown} onTouchStart={onMouseDown} onMouseUp={onMouseUp} onTouchEnd={onMouseUp} onMouseMove={onMouseMove} onTouchMove={onMouseMove} onMouseEnter={onMouseEnter}>
-            <Layer x={rulerwidth-scale.startx*2*size.beadRadius} y={rulerwidth-scale.starty*2*size.beadRadius} scaleX={size.beadRadius} scaleY={size.beadRadius}>
-                {pattern.pictures.map((img,i)=><ArrayImage key={img.name+i} x={img.x} y={img.y} scale={img.scale} url={img.url}/>)}
+            <Layer x={rulerwidth-scale.startx*2*size.beadRadius} y={rulerwidth-scale.starty*2*size.beadRadius} scaleX={size.beadRadius*2} scaleY={size.beadRadius*2} opacity={layer=="Beads" ? 0.5:1} listening={layer=="Images"}>
+                {pattern.pictures.map((img,i)=><ArrayImage key={img.name+i} img={img} draggable={imgDrag} getRef={x=>{imgRefs.current.set(img,x)}} setXYScale={onImgDrag} whenClicked={onImgClick}/>)}
+                {imgScale && <Transformer rotateEnabled={false} keepRatio={true} flipEnabled={false} ref={transformer}/>}
             </Layer>
-            <Layer x={rulerwidth-scale.startx*2*size.beadRadius} y={rulerwidth-scale.starty*2*size.beadRadius} listening={false}>
+            <Layer x={rulerwidth-scale.startx*2*size.beadRadius} y={rulerwidth-scale.starty*2*size.beadRadius} listening={false} opacity={layer=="Beads" ? 1:0.5}>
                 {
                     size.beadRadius<=2 ? [...pattern.beads].map(([coords,color],k)=>
                     <Rect key={k} y={Math.floor(coords/pattern.width)*size.beadRadius*2+size.beadRadius} x={(coords%pattern.width)*size.beadRadius*2+size.beadRadius} height={size.beadRadius*2} width={size.beadRadius*2}
-                  fill={pattern.colors.find(x=>x.index==color)?.rgb}/>)
+                  fill={pattern.colors.find(x=>x.index==color)?.rgb} opacity={layer=="Beads" ? 1:0.5}/>)
                   : [...pattern.beads].map(([coords,color],k)=>
                     <Circle key={k} y={Math.floor(coords/pattern.width)*size.beadRadius*2+size.beadRadius} x={(coords%pattern.width)*size.beadRadius*2+size.beadRadius} radius={size.beadRadius} 
                   fill={pattern.colors.find(x=>x.index==color)?.rgb} strokeWidth={pattern.colors.find(x=>x.index==color)?.needsBorder ? 1:0} stroke={"black"}/>)
                 }
-                <Rect x={(pattern.width)*2*size.beadRadius} y={0} height={size.height} width={size.width-(pattern.width-scale.startx)*2*size.beadRadius-rulerwidth} fill="#a0a0a0"/>
-                <Rect y={(pattern.height)*2*size.beadRadius} x={0} width={size.width} height={size.height-(pattern.height-scale.starty)*2*size.beadRadius-rulerwidth} fill="#a0a0a0"/>
             </Layer>
             <Layer listening={false}>
                 <Rect x={0} y={0} height={rulerwidth} width={size.width} fill="#a0a0a0"/>
                 <Rect x={0} y={0} width={rulerwidth} height={size.height} fill="#a0a0a0"/>
+                <Rect x={(pattern.width)*2*size.beadRadius+rulerwidth-scale.startx*2*size.beadRadius} y={0} height={size.height} width={size.width-(pattern.width-scale.startx)*2*size.beadRadius-rulerwidth} fill="#a0a0a0"/>
+                <Rect y={(pattern.height)*2*size.beadRadius+rulerwidth-scale.startx*2*size.beadRadius} x={0} width={size.width} height={size.height-(pattern.height-scale.starty)*2*size.beadRadius-rulerwidth} fill="#a0a0a0"/>
+            
                 {scrollbar.vvisible && <Rect x={rulerwidth+size.patternw} y={0} height={size.height} width={scrollwidth+scrollpadding} fill="#a0a0a0"/>}
                 {scrollbar.hvisible && <Rect y={rulerwidth+size.patternh} x={0} width={size.width} height={scrollwidth+scrollpadding} fill="#a0a0a0"/>}
                 {

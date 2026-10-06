@@ -1,9 +1,9 @@
 import EditCanvas from "./EditCanvas"
 import "./Editor.css"
-import type {Bead, Pattern, ShortColor} from "@interfaces/pattern"
+import type {BgPicture, Pattern, ShortColor} from "@interfaces/pattern"
 import EditPanel from "./EditPanel.tsx"
-import { useState } from "react"
-import { type EditorTools } from "@interfaces/enums.ts"
+import { useState, useRef } from "react"
+import { type EditorLayers, type EditorTools } from "@interfaces/enums.ts"
 import {imageDimensionsFromStream} from 'image-dimensions';
 
 const Editor = ({pattern}:{pattern: Pattern})=>{
@@ -13,6 +13,8 @@ const Editor = ({pattern}:{pattern: Pattern})=>{
     const [tempBeads, setTempBeads] = useState<Map<number,number>>(new Map<number,number>)
     const [lineStart, setLineStart] = useState(-1)
     const [scale, setScale] = useState({startx: 0, starty:0, scale: 1})
+    const unsavedFiles= useRef(new Map<string,File>())
+    const [layer,setLayer] = useState<EditorLayers>("Beads")
 
     const PlaceNewBead = (a: number) =>{
         _pattern.beads.set(a,currentColor.index)
@@ -116,18 +118,39 @@ const Editor = ({pattern}:{pattern: Pattern})=>{
     const AddPicture = async (f: File)=>{
         var dims= await imageDimensionsFromStream(f.stream())
         if(dims===undefined) return
+        const url=URL.createObjectURL(f)
         _pattern.pictures.push({
             x: 0,
             y: 0,
             isLocal: true,
             name: f.name,
             scale: Math.min(pattern.height/dims.height,pattern.width/dims.width),
-            url: URL.createObjectURL(f)
+            url
         })
+        unsavedFiles.current.set(url,f)
         setPattern({..._pattern})
+    }
+    const DeletePicture = async (f: BgPicture)=>{
+        if(f.isLocal){
+            if(_pattern.pictures.reduce((cnt: number, p: BgPicture)=>p.url===f.url ? cnt+1:cnt,0)<=1){
+                unsavedFiles.current.delete(f.url)
+            }
+        }
+        _pattern.pictures.splice(_pattern.pictures.indexOf(f),1)
+        setPattern({..._pattern})
+    }
+    const ImgMoved = (f: BgPicture, x: number, y: number, scale: number) =>{
+        f.x=x;
+        f.y=y;
+        f.scale=scale;
+        setPattern({...pattern})
+    }
+    const onSave = ()=>{
+        console.log("Zapisuję wzór:",_pattern)
     }
 
     const onClickBead = (a: number)=>{
+        if(layer!="Beads"&&currentTool!="ZoomIn"&&currentTool!="ZoomOut") return
         switch(currentTool){
             case "Pencil":
                 PlaceNewBead(a)
@@ -193,11 +216,17 @@ const Editor = ({pattern}:{pattern: Pattern})=>{
         }
     }
 
+    const onChangeLayer = (l: EditorLayers) => {
+        setLayer(l)
+    }
+
     return(
         <div className="editor">
-            <EditPanel pattern={_pattern} activeColor={currentColor} activeTool={currentTool} onAddPicture={AddPicture}
+            <EditPanel pattern={_pattern} activeColor={currentColor} activeTool={currentTool} activeLayer={layer}
+            onChangeLayer={onChangeLayer} onAddPicture={AddPicture} onDeletePicture={DeletePicture} onSaveBtnClicked={onSave}
             onColorChange={onColorChange} onToolChange={onToolChange} onNewColor={onColorAdded} onRename={onRename} onSetPublic={onPublic}/>
-            <EditCanvas pattern={_pattern} onClickBeadLayer={onClickBead} onMouseUpDown={onMouseUpDown} scale={scale} drag={currentTool=="Drag"} onScroll={SetNewStartPoint}/>
+            <EditCanvas pattern={_pattern} layer={layer} onClickBeadLayer={onClickBead} onMouseUpDown={onMouseUpDown} scale={scale} drag={currentTool=="Drag"} imgDrag={currentTool=="ImgDrag"} imgScale={currentTool=="ImgScale"}
+            onScroll={SetNewStartPoint} onImgMoved={ImgMoved}/>
         </div>
     )
 }
