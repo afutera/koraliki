@@ -1,0 +1,12 @@
+{
+    "extends": "@tsconfig/node24/tsconfig.json",
+    "include": ["src"],
+    "compilerOptions":{
+        "paths":{
+            "@plugins/*" : ["./src/plugins/*"]
+        },
+         "typeRoots" : ["node_modules/@types"],
+         "rewriteRelativeImportExtensions": true,
+         "allowImportingTsExtensions": true
+    }
+}

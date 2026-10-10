@@ -3,7 +3,7 @@ import type { PaletteHeader } from "@interfaces/palette"
 import { type EditorTools, isEditorTool, type EditorLayers } from "@interfaces/enums"
 import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent } from "react"
 import { isBackendError } from "@interfaces/errors"
-import MockEditorPaletteService from "../../services/MockEditorPaletteService"
+import EditorPaletteService from "../../services/EditorPaletteService"
 
 interface EditPanelProps{
     pattern: Pattern,
@@ -38,34 +38,40 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
     const fileinputref=useRef<HTMLInputElement>(null)
 
     useEffect(()=>{
-        var p=MockEditorPaletteService.GetPalettes();
-        if(isBackendError(p)){
-            setError(p.message)
-            setPalettes([])
-            setActivePalette(-1)
-        }else{
-            setError(null)
-            setPalettes(p)
-            setActivePalette(0)
+        async function getData(){
+            var p=await EditorPaletteService.GetPalettes();
+            if(isBackendError(p)){
+                setError(p.message)
+                setPalettes([])
+                setActivePalette(-1)
+            }else{
+                setError(null)
+                setPalettes(p)
+                setActivePalette(0)
+            }
         }
+        getData()
     },[])
     useEffect(()=>{
-        if(activePalette===-1||palettes.length<=activePalette){
+        async function GetColor(){
+            if(activePalette===-1||palettes.length<=activePalette){
             setError("Brak palety")
             setPaletteColors([])
             setActivePaletteColor(-1)
             return
+            }
+            var p= await EditorPaletteService.GetColorsFromPalette(palettes[activePalette]._id);
+            if(isBackendError(p)){
+                setError(p.message)
+                setPaletteColors([])
+                setActivePaletteColor(-1)
+            }else{
+                setError(null)
+                setPaletteColors(p)
+                setActivePaletteColor(0)
+            }
         }
-        var p=MockEditorPaletteService.GetColorsFromPalette(palettes[activePalette]._id);
-        if(isBackendError(p)){
-            setError(p.message)
-            setPaletteColors([])
-            setActivePaletteColor(-1)
-        }else{
-            setError(null)
-            setPaletteColors(p)
-            setActivePaletteColor(0)
-        }
+        GetColor();
     },[activePalette])
 
     const onColorArrowsClick = (e:MouseEvent<HTMLButtonElement>)=>{
