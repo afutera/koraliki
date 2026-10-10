@@ -24,6 +24,7 @@ const idSchema = {
   fastify.get('/palettes/:id', idSchema, async (req, res) => {
     // @ts-ignore
         const colors=await new PaletteService(models["palettes"]).GetShortColorsFormPalette(req.params.id) //req.params ma schemat, o co mu chodzi???
+        
         if(colors.length==0) res.code(400).send({error:"Brak kolorów w palecie!"})
         else res.send(colors)
   })

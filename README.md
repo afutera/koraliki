@@ -1,5 +1,8 @@
 # Aplikacja do układania wzorów z koralików
 
+## Przykładowe dane na start
+W folderze backend/src znajduje się skrypt seed.ts 
+
 ## pliki .env
 ### Backend
 DB_URL=mongodb://localhost:27017/koraliki <- pełny adres serwera bazy danych mongodb z nazwą bazy
