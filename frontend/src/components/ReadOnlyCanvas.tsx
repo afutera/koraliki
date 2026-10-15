@@ -1,15 +1,15 @@
 import {Stage, Layer, Circle, Rect} from 'react-konva'
-import type {Pattern} from '@interfaces/pattern'
+import type {ShortPattern, Pattern} from '@interfaces/pattern'
 import { useState, useRef, useEffect } from 'react'
 
-const ReadOnlyCanvas = ({pattern}:{pattern:Pattern})=>{
+const ReadOnlyCanvas = ({pattern}:{pattern:ShortPattern|Pattern})=>{
 
     const  [size,setSize]=useState({beadRadius: 1, width: pattern.width, startx: 0, starty: 0})
     const containerRef = useRef<HTMLDivElement|null>(null);
 
     const newSize = ()=>{
         if (!containerRef.current) return;
-        const width = containerRef.current?.offsetWidth;
+        const width = containerRef.current?.offsetWidth-4;
         const beadRadius= width/Math.max(pattern.width, pattern.height)/2;
         setSize({width, beadRadius, startx: (width-2*beadRadius*pattern.width)/2+beadRadius, starty:(width-2*beadRadius*pattern.height)/2+beadRadius})
     }
@@ -24,7 +24,7 @@ const ReadOnlyCanvas = ({pattern}:{pattern:Pattern})=>{
     }, [pattern]);
 
     return(
-        <div ref={containerRef}>
+        <div ref={containerRef} style={{border: '2px solid black', padding: 0, boxSizing: "border-box", backgroundColor:"white"}}>
         <Stage height={size.width} width={size.width}>
             <Layer>
                 {

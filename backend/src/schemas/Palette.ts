@@ -1,7 +1,7 @@
-import mongoose, { ObjectId } from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 interface PaletteColorType{
-    _id: ObjectId,
+    _id?: Types.ObjectId,
     name: string,
     rgb: string,
     needsBorder: boolean,
@@ -9,7 +9,7 @@ interface PaletteColorType{
     toTime? : Date 
 }
 interface PaletteType{
-    _id: ObjectId,
+    _id: Types.ObjectId,
     name: string,
     colors: PaletteColorType[]
 }
@@ -17,7 +17,7 @@ interface PaletteType{
 const paletteSchema =new mongoose.Schema<PaletteType>({
     name: {type: String, required: true},
     colors: [new mongoose.Schema<PaletteColorType>({
-        name: {type: String, required: true, unique: true},
+        name: {type: String, required: true},
         rgb: {type: String, required: true},
         needsBorder: {type: Boolean, required: true},
         fromTime: {type: Date, required: false},

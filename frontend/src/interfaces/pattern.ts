@@ -19,7 +19,6 @@ interface BgPicture {
     scale: number
     url: string,
 }
-//Reprezentuje tylko info do edycji
 //Reprezentuje pełen wzór z informacjami potrzebnymi przy edycji
 interface Pattern {
     _id?: ObjectId,
@@ -38,4 +37,20 @@ interface Pattern {
     pictures: Array<BgPicture>
 }
 
-export type {Pattern, ShortColor, Bead, BgPicture};
+//reprezentuje wzor tylko do galerii, bez obrazow, ale z nazwa uzytkownika i srednia ocena
+interface ShortPattern{
+    _id: ObjectId,
+    title: string,
+    author: ObjectId,
+    authorName: string,
+    height: number,
+    width: number,
+    createdAt: Date,
+    updatedAt: Date,
+    rating: number,
+    colors: Array<ShortColor>,
+    beads: Map<number,number>,
+    isPublic: boolean,
+}
+
+export type {Pattern, ShortColor, Bead, BgPicture, ShortPattern};

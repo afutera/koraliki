@@ -5,10 +5,8 @@ import type { BackendError } from "@interfaces/errors"
 import axios from "axios"
 
 export default class MockEditorPaletteService{
-    //w przyszlosci to bedzie robil backend
 
     static async GetPalettes(): Promise<PaletteHeader[]|BackendError>{
-        console.log("Szukam palety")
         try{
             var p= await axios.get<PaletteHeader[]>(import.meta.env.VITE_API_URL+"/palettes")
             if(p.status===200&&p.data) return p.data

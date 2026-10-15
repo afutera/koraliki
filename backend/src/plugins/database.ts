@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import Fastify from "fastify";
 import fastifyPlugin from "fastify-plugin";
 import { paletteSchema } from "../schemas/Palette.ts";
+import { userSchema } from "../schemas/User.ts";
+import { patternSchema } from "../schemas/Pattern.ts";
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -21,10 +23,13 @@ const database = async (fastify: Fastify.FastifyInstance, opt: Object) =>{
       process.exit(1)
     }
     fastify.log.info("Polaczono z baza danych")
-    const Palettes= mongoose.model("palettes",paletteSchema)
+    mongoose.model("palettes",paletteSchema)
+    mongoose.model("users",userSchema)
+    mongoose.model("patterns", patternSchema)
     fastify.decorate("mongooseModels",mongoose.models)
     fastify.addHook("onClose",async ()=>{
         await mongoose.disconnect()
+        fastify.log.info("Rozlaczono z baza danych")
     })
 }
 

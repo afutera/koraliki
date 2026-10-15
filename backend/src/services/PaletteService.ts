@@ -1,6 +1,7 @@
 import {ObjectId} from "mongodb"
 import { Model} from "mongoose"
 import { type PaletteType, type PaletteColorType } from "../schemas/Palette.ts"
+import { type PatternColorType } from "../schemas/Pattern.ts"
 
 class PaletteService{
     model: Model<PaletteType>
@@ -14,9 +15,18 @@ class PaletteService{
         if(typeof id==="string"){
             id=new ObjectId(id)
         }
-        var palette= await this.model.findById({_id: id},{"colors.fromTime":0,"colors.toTime":0})
+        var palette= await this.model.findById(id,{"colors.fromTime":0,"colors.toTime":0})
         if(palette===null) return new Array<PaletteColorType>()
         return palette.colors
+    }
+    static Color2ShortColor (c: PaletteColorType, index: number):PatternColorType {
+        return {
+            idInPalettes: c._id!,
+            name: c.name,
+            rgb: c.rgb,
+            needsBorder: c.needsBorder,
+            index
+        }
     }
 }
 

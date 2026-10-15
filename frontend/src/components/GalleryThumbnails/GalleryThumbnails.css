@@ -1,0 +1,39 @@
+.PatternThumbnail{
+    width: 16%;
+    display: inline-block;
+    background-color: lavender;
+    box-sizing: border-box;
+    padding: 1%;
+    margin: 0.7%;
+    border-radius: 10px;
+    border: 2px solid purple;
+}
+.PatternThumbnail p, .PatternThumbnail span{
+    margin-top: 0;
+    margin-bottom: 0;
+}
+.PatternThumbnail span{
+    width: 50%;
+    display: inline-block;
+}
+.PatternThumbnail span:nth-child(even){
+    text-align: right;
+}
+.PatternThumbnail span:nth-child(odd){
+    text-align: left;
+}
+
+.PatternThumbnail .title{
+    width: 100%;
+    text-align: center;
+    font-size: larger;
+    font-weight: bold;
+    border-bottom: 1px dotted black;
+}
+
+.PatternThumbnail a, .PatternThumbnail button{
+    margin: 0 2%;
+    background-color: white;
+    border: 2px solid purple;
+    color: purple;
+}
