@@ -120,6 +120,7 @@ const Editor = ({pattern}:{pattern: Pattern})=>{
         if(dims===undefined) return
         const url=URL.createObjectURL(f)
         _pattern.pictures.push({
+            _id: "",
             x: 0,
             y: 0,
             isLocal: true,

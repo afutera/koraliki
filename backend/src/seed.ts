@@ -1,10 +1,10 @@
 import "dotenv/config"
 import mongoose from "mongoose";
-import { paletteSchema } from "./schemas/Palette.ts";
-import { userSchema } from "./schemas/User.ts";
-import { patternSchema } from "./schemas/Pattern.ts";
-import AuthService from "./services/AuthService.ts";
-import PaletteService from "./services/PaletteService.ts";
+import { paletteSchema } from "@schemas/Palette.js";
+import { userSchema } from "@schemas/User.js";
+import { patternSchema } from "@schemas/Pattern.js";
+import AuthService from "@services/AuthService.js";
+import PaletteService from "@services/PaletteService.js";
 
 console.log("Rozpoczynam import")
 if(process.env.DB_URL===undefined){

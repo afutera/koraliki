@@ -1,12 +1,12 @@
-import { ObjectId } from "bson"
 import { type ShortPattern, type ShortColor } from "@interfaces/pattern"
 import axios from "axios";
 import type { BackendError } from "@interfaces/errors";
+import BeadObject2Map from "../utils/BeadObject2Map";
 
 interface UnmappedShortPattern{
-    _id: ObjectId,
+    _id: string,
     title: string,
-    author: ObjectId,
+    author: string,
     authorName: string,
     height: number,
     width: number,
@@ -28,13 +28,8 @@ export default class GalleryPatternService{
     //nie bierze tokenu i uzytkownika z ciasteczek
 
     static ShortPattern2Map(x: UnmappedShortPattern): ShortPattern|undefined{
-        const map=new Map<number,number>();
-        for(let key in x.beads){
-            let nr = parseInt(key)
-            if(isNaN(nr)) return undefined
-            if(typeof x.beads[key]!=="number") return undefined
-            map.set(nr, x.beads[key])
-        }
+        const map=BeadObject2Map(x.beads);
+        if(map===undefined) return undefined;
         return {...x, beads: map}
     }
     static GalleryResponse2Map(res: {pageNo: number, pageCount: number,results: [UnmappedShortPattern]}): GalleryResponse{
@@ -52,12 +47,12 @@ export default class GalleryPatternService{
             }
             else return {statusCode: p.status, message: "Nieprzewidziany błąd przy pobieraniu wzorów"}
         }catch(e){
-            if(axios.isAxiosError(e) && e.response) return {statusCode: e.response.status, message: e.response.data.error ?? "Nie udało się pobrać wzorów"}
+            if(axios.isAxiosError(e) && e.response) return {statusCode: e.response.status, message: e.response.data.message ?? e.response.data.error  ?? "Nie udało się pobrać wzorów"}
             else return {statusCode: 500, message: "Nieznany błąd"}
         }
     }
 
-    static async CopyPattern(id: ObjectId): Promise<true|BackendError>{
+    static async CopyPattern(id: string): Promise<true|BackendError>{
         const jwt="aaaa"
         try{
             var p= await axios.post<{_id: string}>(import.meta.env.VITE_API_URL+`/patterns/${id}/copy`,{},{headers: {"auth":jwt}})
@@ -66,11 +61,11 @@ export default class GalleryPatternService{
             }
             else return {statusCode: p.status, message: "Nieprzewidziany błąd przy pobieraniu wzorów"}
         }catch(e){
-            if(axios.isAxiosError(e) && e.response) return {statusCode: e.response.status, message: e.response.data.error ?? "Nie udało się pobrać wzorów"}
+            if(axios.isAxiosError(e) && e.response) return {statusCode: e.response.status, message: e.response.data.message ?? e.response.data.error  ?? "Nie udało się pobrać wzorów"}
             else return {statusCode: 500, message: "Nieznany błąd"}
         }
     }
-    static async DeletePattern(id: ObjectId): Promise<true|BackendError>{
+    static async DeletePattern(id: string): Promise<true|BackendError>{
         const jwt="aaaa"
         try{
             var p= await axios.delete<{_id: string}>(import.meta.env.VITE_API_URL+`/patterns/${id}`,{headers: {"auth":jwt}})
@@ -79,7 +74,7 @@ export default class GalleryPatternService{
             }
             else return {statusCode: p.status, message: "Nieprzewidziany błąd przy pobieraniu wzorów"}
         }catch(e){
-            if(axios.isAxiosError(e) && e.response) return {statusCode: e.response.status, message: e.response.data.error ?? "Nie udało się pobrać wzorów"}
+            if(axios.isAxiosError(e) && e.response) return {statusCode: e.response.status, message: e.response.data.message ?? e.response.data.error  ?? "Nie udało się pobrać wzorów"}
             else return {statusCode: 500, message: "Nieznany błąd"}
         }
     }

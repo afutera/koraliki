@@ -8,14 +8,14 @@
   "main": "src/main.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "nodemon src/main.ts",
-    "start": "node src/main.ts",
-    "seed": "node src/seed.ts"
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "seed": "tsx src/seed.ts"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.5",
     "@types/node": "^26.6.5",
-    "nodemon": "^3.1.14",
+    "tsx": "^4.23.15",
     "typescript": "6.0.3"
   },
   "dependencies": {
@@ -28,7 +28,6 @@
     "fastify": "^5.12.5",
     "fastify-plugin": "^6.0.1",
     "mongoose": "^9.11.1",
-    "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0"
+    "ts-node": "^10.9.2"
   }
 }

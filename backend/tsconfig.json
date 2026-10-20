@@ -3,7 +3,10 @@
     "include": ["src"],
     "compilerOptions":{
         "paths":{
-            "@plugins/*" : ["./src/plugins/*"]
+            "@plugins/*" : ["./src/plugins/*"],
+            "@services/*" : ["./src/services/*"],
+            "@schemas/*" : ["./src/schemas/*"],
+            "@shared/*" : ["../shared/*"],
         },
          "typeRoots" : ["node_modules/@types"],
          "rewriteRelativeImportExtensions": true,

@@ -1,4 +1,3 @@
-import { ObjectId } from "bson"
 import { useState, useEffect } from "react"
 import GalleryPatternService, {type GalleryResponse} from "../services/GalleryPatternsService"
 import MyPatternThumbnail from "./GalleryThumbnails/MyPatternThumbnail"
@@ -26,7 +25,7 @@ const ProfileGallery = ()=>{
         load()
     },[])
 
-    const onDelete=(id: ObjectId)=>{
+    const onDelete=(id: string)=>{
         if(!window.confirm("Czy na pewno chcesz nieodwracalnie usunąć wzór?")) return
         GalleryPatternService.DeletePattern(id).then(x=>{
             if(isBackendError(x)) setError(`Błąd kopiowania ${x.statusCode} - ${x.message}`)
@@ -34,7 +33,7 @@ const ProfileGallery = ()=>{
         })
     }
 
-    const onCopy=(id: ObjectId)=>{
+    const onCopy=(id: string)=>{
         GalleryPatternService.CopyPattern(id).then(x=>{
             if(isBackendError(x)) setError(`Błąd kopiowania ${x.statusCode} - ${x.message}`)
             else load()

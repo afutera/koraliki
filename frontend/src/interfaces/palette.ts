@@ -1,21 +1,9 @@
-import {ObjectId} from 'bson'
+import {type SharedPaletteHeader, type SharedPaletteColor, type SharedPalette} from '@shared/interfaces/palette'
 
-interface PaletteColor{
-    _id?: ObjectId,
-    name: string,
-    rgb: string,
-    needsBorder: boolean,
-    fromTime?: Date, 
-    toTime?: Date
-}
+interface PaletteColor extends SharedPaletteColor<string> {}
 
-interface PaletteHeader{
-    _id: ObjectId,
-    name: string
-}
+interface PaletteHeader extends SharedPaletteHeader<string> {}
 
-interface Palette extends PaletteHeader{
-    colors: Array<PaletteColor>
-}
+interface Palette extends SharedPalette<string,PaletteColor> {}
 
 export type {Palette, PaletteColor, PaletteHeader}

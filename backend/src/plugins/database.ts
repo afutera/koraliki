@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 import Fastify from "fastify";
 import fastifyPlugin from "fastify-plugin";
-import { paletteSchema } from "../schemas/Palette.ts";
-import { userSchema } from "../schemas/User.ts";
-import { patternSchema } from "../schemas/Pattern.ts";
+import { paletteSchema } from "@schemas/Palette.js";
+import { userSchema } from "@schemas/User.js";
+import { patternSchema } from "@schemas/Pattern.js";
 
 declare module 'fastify' {
   interface FastifyInstance {

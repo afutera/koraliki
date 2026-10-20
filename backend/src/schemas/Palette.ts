@@ -1,18 +1,8 @@
 import mongoose, { Types } from "mongoose";
+import {SharedPalette, type SharedPaletteColor} from "@shared/interfaces/palette.js"
 
-interface PaletteColorType{
-    _id?: Types.ObjectId,
-    name: string,
-    rgb: string,
-    needsBorder: boolean,
-    fromTime?: Date,
-    toTime? : Date 
-}
-interface PaletteType{
-    _id: Types.ObjectId,
-    name: string,
-    colors: PaletteColorType[]
-}
+interface PaletteColorType extends SharedPaletteColor<Types.ObjectId>{}
+interface PaletteType extends SharedPalette<Types.ObjectId,PaletteColorType>{}
 
 const paletteSchema =new mongoose.Schema<PaletteType>({
     name: {type: String, required: true},

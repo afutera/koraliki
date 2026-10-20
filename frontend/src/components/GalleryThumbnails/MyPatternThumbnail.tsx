@@ -1,10 +1,9 @@
 import ReadOnlyCanvas from "@components/ReadOnlyCanvas"
 import type { ShortPattern } from "@interfaces/pattern"
-import { ObjectId } from "bson"
 import "./GalleryThumbnails.css"
 
 
-const MyPatternThumbnail = ({pattern, onDelete, onCopy}: {pattern: ShortPattern, onDelete: (id: ObjectId)=>void, onCopy: (id: ObjectId)=>void})=>{
+const MyPatternThumbnail = ({pattern, onDelete, onCopy}: {pattern: ShortPattern, onDelete: (id: string)=>void, onCopy: (id: string)=>void})=>{
 
     const onClickDelete=()=>{
         if(pattern._id!==undefined) onDelete(pattern._id)

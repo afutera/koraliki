@@ -1,10 +1,10 @@
 import "dotenv/config"
 import Fastify from "fastify"
 //nodemonowi sie nie podobaja aliasy, poprawic to pozniej
-import db from "./plugins/database.ts"
-import routes from "./plugins/routes.ts"
+import db from "@plugins/database.js"
+import routes from "@plugins/routes.js"
 import cors from '@fastify/cors'
-import auth from "./plugins/auth.ts"
+import auth from "@plugins/auth.js"
 
 const port = parseInt(process.env.PORT ?? "3000")
 const host= process.env.HOST ?? "0.0.0.0"

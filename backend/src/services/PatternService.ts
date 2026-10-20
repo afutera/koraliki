@@ -1,5 +1,5 @@
 import { Model, Types } from "mongoose"
-import { type PatternType, type PatternColorType, type ShortPattern } from "../schemas/Pattern.ts"
+import { type PatternTypeEdit, type PatternTypeInternal, type PatternColorType, type ShortPattern } from "@schemas/Pattern.js"
 
 
 interface PatternsList{
@@ -11,8 +11,8 @@ interface PatternsList{
 
 class PatternService{
     static readonly PATTERNS_PER_PAGE=20
-    model: Model<PatternType>
-    constructor(model: Model<PatternType>){
+    model: Model<PatternTypeInternal>
+    constructor(model: Model<PatternTypeInternal>){
         this.model=model
     }
 
@@ -25,10 +25,10 @@ class PatternService{
         if(page>pageCount) page=pageCount
         /*console.log(await this.model.find())
         return await this.model.find()*/
-        const results= await this.model.find(findOptions,null,{sort: sortBy,skip: PatternService.PATTERNS_PER_PAGE*(page-1), limit:PatternService.PATTERNS_PER_PAGE})
-        .populate([{path:'author',select:'username'}]).lean()
+        const results= await this.model.find(findOptions,null,{sort: sortBy,skip: PatternService.PATTERNS_PER_PAGE*(page-1), limit:PatternService.PATTERNS_PER_PAGE}).lean()
+        .populate([{path:'author',select:'username'}])
         .transform(x=>({pageNo: page, pageCount, results: [...x].map(el=>{
-            var { images, ratingsCount, ratingsSum, author, ...el2}={...el};
+            var { pictures, ratingsCount, ratingsSum, author, ...el2}={...el};
             if(ratingsSum==undefined) ratingsSum=0;
             if(ratingsCount==undefined) ratingsCount=0;
              return {...el2, rating: ratingsCount==0 ? 0:+(ratingsSum/ratingsCount).toFixed(1), author: author._id, authorName: author.username ?? "nieznany"}})}));
@@ -52,7 +52,7 @@ class PatternService{
         const results= await this.model.find(findOptions,null,{sort: sortBy,skip: PatternService.PATTERNS_PER_PAGE*(page-1), limit:PatternService.PATTERNS_PER_PAGE})
         .populate([{path:'author',select:'username'}]).lean()
         .transform(x=>({pageNo: page, pageCount, results: [...x].map(el=>{
-            var { images, ratingsCount, ratingsSum, author, ...el2}={...el};
+            var { pictures, ratingsCount, ratingsSum, author, ...el2}={...el};
             if(ratingsSum==undefined) ratingsSum=0;
             if(ratingsCount==undefined) ratingsCount=0;
              return {...el2, rating: ratingsCount==0 ? 0:+(ratingsSum/ratingsCount).toFixed(1), author: author._id, authorName: author.username ?? "nieznany"}})}));
@@ -73,10 +73,10 @@ class PatternService{
             return {...el, rating: ratingsCount==0 ? 0:+(ratingsSum/ratingsCount).toFixed(1), author: author._id, authorName: author.username}
         }else return 403
     }
-    async GetPatternForEdit(pattern: Types.ObjectId|string, user: Types.ObjectId|string):Promise<PatternType|404|403>{
+    async GetPatternForEdit(pattern: Types.ObjectId|string, user: Types.ObjectId|string):Promise<PatternTypeEdit|404|403>{
         if(typeof pattern ==="string") pattern=new Types.ObjectId(pattern)
         if(typeof user ==="string") user=new Types.ObjectId(user)
-        let p = await this.model.findById(pattern);
+        let p = await this.model.findById(pattern,{ratingsCount:0,ratingsSum:0});
         if(p===null) return 404
         if(p.author.equals(user)){
             return p
@@ -89,7 +89,7 @@ class PatternService{
         if(p===null) return 404
         if(p.author.equals(user)){
             var copy=p.$clone()
-            copy.title = copy.title + " - kopia"
+            copy.title = (copy.title.length>22 ? (copy.title.substring(0,19)+"..."):copy.title) + " - kopia"
             copy.isPublic=false
             copy.isNew=true
             copy._id=new Types.ObjectId()

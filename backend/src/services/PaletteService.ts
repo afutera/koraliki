@@ -1,7 +1,7 @@
 import {ObjectId} from "mongodb"
 import { Model} from "mongoose"
-import { type PaletteType, type PaletteColorType } from "../schemas/Palette.ts"
-import { type PatternColorType } from "../schemas/Pattern.ts"
+import { type PaletteType, type PaletteColorType } from "@schemas/Palette.js"
+import { type PatternColorType } from "@schemas/Pattern.js"
 
 class PaletteService{
     model: Model<PaletteType>

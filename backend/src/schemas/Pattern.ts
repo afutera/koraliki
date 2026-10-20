@@ -1,53 +1,21 @@
 import {Schema, Types} from "mongoose";
+import {SharedEditPattern, SharedGalleryPattern, SharedPatternColor, type SharedImage} from "@shared/interfaces/pattern.js"
 
-interface ImageType{
-    name: string,
-    url: string,
-    x: number,
-    y:number,
-    scale: number
+interface ImageType extends SharedImage<Types.ObjectId> {}
+
+interface PatternColorType extends SharedPatternColor<Types.ObjectId> {
+    idInPalettes: Types.ObjectId
 }
 
-interface PatternColorType{
-    idInPalettes: Types.ObjectId,
-    name: string,
-    rgb: string,
-    needsBorder: boolean,
-    index: number
-}
-
-interface PatternType{
-    _id: Types.ObjectId,
-    title: string,
-    author: Types.ObjectId,
-    height: number,
-    width: number,
-    createdAt: Date,
-    updatedAt: Date,
-    isPublic: boolean,
+interface PatternTypeEdit extends SharedEditPattern<Types.ObjectId,string,PatternColorType,ImageType>{}
+interface PatternTypeInternal extends PatternTypeEdit{
     ratingsCount: number,
-    ratingsSum: number,
-    colors: Array<PatternColorType>,
-    images: Array<ImageType>,
-    beads: Map<string,number>
+    ratingsSum: number
 }
-interface ShortPattern{
-    _id: Types.ObjectId,
-    title: string,
-    author: Types.ObjectId,
-    authorName: string,
-    height: number,
-    width: number,
-    createdAt: Date,
-    updatedAt: Date,
-    rating: number,
-    colors: Array<PatternColorType>,
-    beads: Map<string,number>,
-    isPublic: boolean,
-}
+interface ShortPattern extends SharedGalleryPattern<Types.ObjectId,string,PatternColorType> {}
 
 
-const patternSchema =new Schema<PatternType>({
+const patternSchema =new Schema<PatternTypeInternal>({
     title: {type: Schema.Types.String, required: true},
     author: {type: Schema.Types.ObjectId, required: true, ref: 'users'},
     width: {type: Schema.Types.Int32, required: true},
@@ -64,7 +32,7 @@ const patternSchema =new Schema<PatternType>({
         needsBorder: {type: Boolean, required: true},
         index: {type: Schema.Types.Int32, required: true}
     })],
-    images: [new Schema<ImageType>({
+    pictures: [new Schema<ImageType>({
         name: {type: Schema.Types.String, required: true},
         url: {type: Schema.Types.String, required: true},
         x: {type: Schema.Types.Number, required: true},
@@ -74,4 +42,4 @@ const patternSchema =new Schema<PatternType>({
     beads: {type: Schema.Types.Map, of: Schema.Types.Int32}
 })
 
-export { patternSchema, type PatternType, type ImageType, type PatternColorType, type ShortPattern }
+export { patternSchema, type PatternTypeEdit, type PatternTypeInternal, type ImageType, type PatternColorType, type ShortPattern }

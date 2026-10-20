@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import fastifyPlugin from "fastify-plugin";
-import AuthService, { type AuthUserInfo } from "../services/AuthService.ts";
+import AuthService, { type AuthUserInfo } from "@services/AuthService.js";
 import auth from "@fastify/auth"
 import jwt from "@fastify/jwt"
 

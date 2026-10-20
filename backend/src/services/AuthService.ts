@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt"
-import {type UserType } from "../schemas/User.ts"
+import {type UserType } from "@schemas/User.js"
 import { Model, Types } from "mongoose"
 import { type JwtDecorator } from "@fastify/jwt"
+import {} from "@shared/interfaces/user.js"
 
 interface AuthUserInfo{
     _id: Types.ObjectId,

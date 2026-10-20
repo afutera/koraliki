@@ -13,7 +13,8 @@ export default defineConfig({
     alias:{
       "@components": path.resolve(import.meta.dirname,"./src/components"),
       "@interfaces": path.resolve(import.meta.dirname,"./src/interfaces"),
-      "@services": path.resolve(import.meta.dirname,"./src/services")
+      "@services": path.resolve(import.meta.dirname,"./src/services"),
+      "@shared": path.resolve(import.meta.dirname,"../shared")
     }
   }
 })

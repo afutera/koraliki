@@ -1,56 +1,15 @@
-import {ObjectId} from 'bson'
+import {type SharedPatternColor, type SharedImage, type SharedEditPattern, type SharedGalleryPattern} 
+from '@shared/interfaces/pattern'
 
-interface ShortColor {
-    _id: ObjectId,
-    index: number
-    name: string,
-    rgb: string,
-    needsBorder: boolean
-}
-interface Bead {
-    coords: number,
-    color: number //index z ShortColor
-}
-interface BgPicture {
-    x: number,
-    y: number,
-    name: string,
+interface ShortColor extends SharedPatternColor<string> {}
+
+interface BgPicture extends SharedImage<string>{
     isLocal: boolean
-    scale: number
-    url: string,
 }
 //Reprezentuje pełen wzór z informacjami potrzebnymi przy edycji
-interface Pattern {
-    _id?: ObjectId,
-    authorId: ObjectId,
-    authorName?: string,
-    title: string,
-    height: number,
-    width: number,
-    isPublic: boolean,
-    createdAt: Date,
-    lastUpdatedAt: Date,
-    ratingSum: number,
-    ratingCount: number,
-    colors: Array<ShortColor>,
-    beads: Map<number,number>,
-    pictures: Array<BgPicture>
-}
+interface Pattern extends SharedEditPattern<string,number,ShortColor,BgPicture> {}
 
 //reprezentuje wzor tylko do galerii, bez obrazow, ale z nazwa uzytkownika i srednia ocena
-interface ShortPattern{
-    _id: ObjectId,
-    title: string,
-    author: ObjectId,
-    authorName: string,
-    height: number,
-    width: number,
-    createdAt: Date,
-    updatedAt: Date,
-    rating: number,
-    colors: Array<ShortColor>,
-    beads: Map<number,number>,
-    isPublic: boolean,
-}
+interface ShortPattern extends SharedGalleryPattern<string, number, ShortColor> {}
 
-export type {Pattern, ShortColor, Bead, BgPicture, ShortPattern};
+export type {Pattern, ShortColor, BgPicture, ShortPattern};
