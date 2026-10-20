@@ -2,12 +2,14 @@ import { useState, useEffect } from "react"
 import GalleryPatternService, {type GalleryResponse} from "../services/GalleryPatternsService"
 import MyPatternThumbnail from "./GalleryThumbnails/MyPatternThumbnail"
 import { isBackendError } from "@interfaces/errors"
+import { useNavigate } from "react-router-dom"
 
 
 const ProfileGallery = ()=>{
 
     const [results, setResults] = useState<GalleryResponse>({pageCount: 0, pageNo: 1, results: []})
     const [error, setError] = useState<string>("")
+    const nav = useNavigate();
 
     const load=async ()=>{
         const r=await GalleryPatternService.MOCK_GetAllMyPatterns()
@@ -40,11 +42,15 @@ const ProfileGallery = ()=>{
         })
     }
 
+    const onEdit=(id: string)=>{
+        nav("/edytor/"+id)
+    }
+
     return (<div className="Gallery">
         <p>Strona {results.pageNo} z {results.pageCount}</p>
         {
             results.results.map(x=>
-                <MyPatternThumbnail key={"pattern_"+x._id} pattern={x} onDelete={onDelete} onCopy={onCopy}/>
+                <MyPatternThumbnail key={"pattern_"+x._id} pattern={x} onDelete={onDelete} onCopy={onCopy} onEdit={onEdit}/>
             )
         }
         <p>{error}</p>
