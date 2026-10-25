@@ -32,7 +32,7 @@ const ReadOnlyCanvas = ({pattern}:{pattern:ShortPattern|Pattern})=>{
                     [...pattern.beads].map(([coords,color],k)=>
                     <Rect key={k} y={Math.floor(coords/pattern.width)*size.beadRadius*2+size.starty} x={(coords%pattern.width)*size.beadRadius*2+size.startx} width={size.beadRadius*2} height={size.beadRadius*2} fill={pattern.colors[color].rgb}/>)
                   :[...pattern.beads].map(([coords,color],k)=>
-                    <Circle key={k} y={Math.floor(coords/pattern.width)*size.beadRadius*2+size.starty} x={(coords%pattern.width)*size.beadRadius*2+size.startx} radius={size.beadRadius} fill={pattern.colors[color].rgb}
+                    <Circle key={k} y={Math.floor(coords/pattern.width)*size.beadRadius*2+size.starty} x={(coords%pattern.width)*size.beadRadius*2+size.startx} radius={size.beadRadius} fill={pattern.colors.find(x=>x.index===color)?.rgb}
                     strokeEnabled={pattern.colors[color].needsBorder} stroke={"black"}/>)
                 }
             </Layer>

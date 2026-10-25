@@ -3,7 +3,8 @@ from '@shared/interfaces/pattern'
 
 interface ShortColor extends SharedPatternColor<string> {}
 
-interface BgPicture extends SharedImage<string>{
+interface BgPictureApi extends SharedImage<string> {}
+interface BgPicture extends BgPictureApi{
     isLocal: boolean
 }
 //Reprezentuje pełen wzór z informacjami potrzebnymi przy edycji
@@ -12,4 +13,4 @@ interface Pattern extends SharedEditPattern<string,number,ShortColor,BgPicture> 
 //reprezentuje wzor tylko do galerii, bez obrazow, ale z nazwa uzytkownika i srednia ocena
 interface ShortPattern extends SharedGalleryPattern<string, number, ShortColor> {}
 
-export type {Pattern, ShortColor, BgPicture, ShortPattern};
+export type {Pattern, ShortColor, BgPicture, BgPictureApi, ShortPattern};

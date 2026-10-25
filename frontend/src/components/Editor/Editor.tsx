@@ -5,8 +5,10 @@ import EditPanel from "./EditPanel.tsx"
 import { useState, useRef } from "react"
 import { type EditorLayers, type EditorTools } from "@interfaces/enums.ts"
 import {imageDimensionsFromStream} from 'image-dimensions';
+import EditorPatternService from "../../services/EditorPatternService.ts"
+import { isBackendError } from "@interfaces/errors.ts"
 
-const Editor = ({pattern}:{pattern: Pattern})=>{
+const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
     const [_pattern, setPattern] = useState(pattern)
     const [currentColor, setCurrentColor] = useState(pattern.colors[0])
     const [currentTool, setCurrentTool] = useState<EditorTools>("Drag")
@@ -120,7 +122,6 @@ const Editor = ({pattern}:{pattern: Pattern})=>{
         if(dims===undefined) return
         const url=URL.createObjectURL(f)
         _pattern.pictures.push({
-            _id: "",
             x: 0,
             y: 0,
             isLocal: true,
@@ -131,7 +132,7 @@ const Editor = ({pattern}:{pattern: Pattern})=>{
         unsavedFiles.current.set(url,f)
         setPattern({..._pattern})
     }
-    const DeletePicture = async (f: BgPicture)=>{
+    const DeletePicture = (f: BgPicture)=>{
         if(f.isLocal){
             if(_pattern.pictures.reduce((cnt: number, p: BgPicture)=>p.url===f.url ? cnt+1:cnt,0)<=1){
                 unsavedFiles.current.delete(f.url)
@@ -146,8 +147,16 @@ const Editor = ({pattern}:{pattern: Pattern})=>{
         f.scale=scale;
         setPattern({...pattern})
     }
-    const onSave = ()=>{
+    const onSave = async ()=>{
         console.log("Zapisuję wzór:",_pattern)
+        const res=await EditorPatternService.SavePattern(_pattern,unsavedFiles.current);
+        if(res===true){
+            unsavedFiles.current.clear()
+            reload()
+            return undefined
+        }
+        if(isBackendError(res)) return new Error("Błąd przy zapisie: "+res.message)
+        return new Error("Niepoprawne dane: "+res.message)
     }
 
     const onClickBead = (a: number)=>{
@@ -177,7 +186,7 @@ const Editor = ({pattern}:{pattern: Pattern})=>{
     const onToolChange = (c:EditorTools)=>{setCurrentTool(c)}
 
     const onColorAdded = (c: ShortColor)=>{
-        let found=_pattern.colors.find(x=>x._id==c._id)
+        let found=_pattern.colors.find(x=>x.idInPalettes==c.idInPalettes)
         if(found===undefined){
             c.index=_pattern.colors.reduce((prev,x)=>Math.max(prev,x.index),-1)+1
             _pattern.colors.push(c)
@@ -188,7 +197,13 @@ const Editor = ({pattern}:{pattern: Pattern})=>{
     }
 
     const onRename = (c:string)=>{
+        if(c.length<=0) {
+            setPattern({..._pattern, title: c}) //Mozna tymczasowo miec pusty, zeby zmienic 1-szy znak, ale nie mozna tego wyslac
+            return new Error("Tytuł nie może być pusty")
+        }
+        if(c.length>30) return new Error("Tytuł nie może być dłuższy niż 30 znaków")
         setPattern({..._pattern, title: c})
+        return undefined
     }
 
     const onPublic = (c:boolean)=>{

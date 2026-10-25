@@ -1,5 +1,5 @@
 import type { BackendError } from "@interfaces/errors";
-import type { BgPicture, Pattern, ShortColor } from "@interfaces/pattern";
+import type { BgPictureApi, Pattern, ShortColor } from "@interfaces/pattern";
 import axios from "axios";
 import BeadObject2Map from "../utils/BeadObject2Map";
 
@@ -14,7 +14,7 @@ interface UnmappedEditPattern{
     updatedAt: Date,
     colors: Array<ShortColor>,
     beads: any
-    pictures: Array<BgPicture>
+    pictures: Array<BgPictureApi>
 }
 
 
@@ -26,7 +26,7 @@ export default class EditorPatternService{
             if(p.status===200&&p.data){
                 const beads=BeadObject2Map(p.data.beads)
                 if(beads===undefined) return new Error("Niepoprawna struktura koralików")
-                else return {...p.data, beads}
+                else return {...p.data, beads, pictures : p.data.pictures.map(x=>({...x, isLocal: false, url: import.meta.env.VITE_API_URL+x.url}))}
             }
             else return {statusCode: p.status, message: "Nieprzewidziany błąd przy pobieraniu wzoru"}
         }catch(e){
@@ -45,21 +45,23 @@ export default class EditorPatternService{
         })
         if(errstring.length>0) return new Error(errstring)
         const filearray=[...files]
-        const imgarray=pattern.pictures.map(i=>({...i, url: (i.isLocal ? (filearray.findIndex(x=>x[0]===i.url).toFixed(0)):i.url)}))
+        const imgarray=pattern.pictures.map(i=>({...i, url: (i.isLocal ? (filearray.findIndex(x=>x[0]===i.url).toFixed(0)):i.url.replace(import.meta.env.VITE_API_URL,""))}))
         const notfound=imgarray.find(x=>x.url==="-1")
         if(notfound!==undefined) return new Error("Nie znaleziono pliku dla obrazu "+notfound.name+". Spróbuj usunąć obraz i dodać go ponownie.")
-                    var formdata: FormData = new FormData(undefined,undefined)
-        formdata.append("pattern",JSON.stringify({title: pattern.title, isPublic: pattern.isPublic, colors: pattern.colors, beads: sendbeads, pictures: imgarray}))
+        var formdata: FormData = new FormData(undefined,undefined)
+        formdata.append("pattern",JSON.stringify({_id: pattern._id, title: pattern.title, isPublic: pattern.isPublic, colors: pattern.colors, beads: sendbeads, pictures: imgarray}))
         filearray.forEach((x,ind)=>{formdata.append(ind.toFixed(0),x[1])})
         const jwt='aaa'
         try{
             var p= await axios.patch(import.meta.env.VITE_API_URL+`/patterns/${pattern._id}`,formdata,{headers: {"auth":jwt,"Content-Type":"multipart/form-data"}})
-            if(p.status===200&&p.data){
-            }
+            if(p.status===205) return true
             else return {statusCode: p.status, message: "Nieprzewidziany błąd przy pobieraniu wzoru"}
         }catch(e){
             if(axios.isAxiosError(e) && e.response) return {statusCode: e.response.status, message: e.response.data.message ?? e.response.data.error ?? "Nie udało się pobrać wzorów"}
-            else return {statusCode: 500, message: "Nieznany błąd"}
+            else {
+
+                return {statusCode: 500, message: "Nieznany błąd"}
+            }
         }
         return true
     }

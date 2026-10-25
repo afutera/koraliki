@@ -1,5 +1,6 @@
 export interface SharedPatternColor<IdType>{
     _id?: IdType,
+    idInPalettes: IdType
     name: string,
     rgb: string,
     needsBorder: boolean,

@@ -2,14 +2,9 @@ import bcrypt from "bcrypt"
 import {type UserType } from "@schemas/User.js"
 import { Model, Types } from "mongoose"
 import { type JwtDecorator } from "@fastify/jwt"
-import {} from "@shared/interfaces/user.js"
+import {type SharedJwtUser} from "@shared/interfaces/user.js"
 
-interface AuthUserInfo{
-    _id: Types.ObjectId,
-    username: string,
-    isAdmin: boolean,
-    isMainAdmin: boolean
-}
+interface AuthUserInfo extends SharedJwtUser<Types.ObjectId> {}
 
 
 

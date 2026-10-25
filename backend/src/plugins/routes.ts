@@ -3,6 +3,9 @@ import fastifyPlugin from "fastify-plugin";
 import PaletteService from "@services/PaletteService.js";
 import PatternService from "@services/PatternService.js";
 import { Types } from "mongoose";
+import { type SavePatternRequest } from "@services/PatternService.js";
+import {BusboyFileStream} from "@fastify/busboy"
+import stream from "stream"
 
 async function routes (fastify: Fastify.FastifyInstance, opt: Object) {
   const models=fastify.mongooseModels;
@@ -67,6 +70,25 @@ const idSchema = {
       if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":"Obraz prywatny innego użytkownika"})
       else res.code(200).send(result)
   })
+  fastify.patch("/patterns/:id",{preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
+    const parts=req.parts()
+    const mappedreq: SavePatternRequest = {patternJson:"", files: new Map<string,{stream: stream.Readable, type: string}>()}
+    for await (const p of parts){
+      if(p.type==="file") {
+        if(p.file.truncated) res.code(400).send("Pliki nie mogą być większe niż 1 MB")
+        const buffer=await p.toBuffer()
+        mappedreq.files.set(p.fieldname, {stream: stream.Readable.from(buffer), type: p.mimetype})} //petla sie nie skonczy jak nie przeczytam strumienia
+
+      else if(p.fieldname==="pattern") mappedreq.patternJson=`${p.value}`
+      else res.code(400).send({message:`Niepoprawny klucz ${p.fieldname}`})
+    }
+    const paletteservice=new PaletteService(models["palettes"])
+    // @ts-ignore
+    const result=await new PatternService(models["patterns"]).UpdatePattern(req.params.id, req.currentUser?._id!, mappedreq, async (x)=>{return await paletteservice.CheckIfColorExists(x)})
+    if(result===true) res.code(205).send()
+    else res.code(result.code).send({message:result.err})
+    
+  })
   fastify.delete("/patterns/:id",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
     // @ts-ignore
     const _id = new Types.ObjectId(req.params.id)
@@ -76,10 +98,6 @@ const idSchema = {
       else if(result==404) res.send({message:"Nie znaleziono obrazu"})
       else res.send({message:"Obraz innego użytkownika"})
   })
-
-
-  //sciezki dla zalogowanych
-  //sciezki dla adminow
 }
 
 export default fastifyPlugin(routes)

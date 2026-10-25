@@ -17,7 +17,7 @@ const database = async (fastify: Fastify.FastifyInstance, opt: Object) =>{
       process.exit(1)
     }
     try{
-      await mongoose.connect(process.env.DB_URL!)
+      await mongoose.connect(process.env.DB_URL!,{connectTimeoutMS:8000})
     }catch{
       fastify.log.error("Nie udalo się polaczyc z baza danych")
       process.exit(1)

@@ -13,12 +13,12 @@ interface EditPanelProps{
     onColorChange: (color: ShortColor)=>void, 
     onToolChange: (tool: EditorTools)=>void,
     onNewColor: (color: ShortColor) =>void,
-    onRename: (name: string)=>void,
+    onRename: (name: string)=>Error|undefined,
     onSetPublic: (isPublic: boolean) => void,
     onAddPicture: (file: File) => void,
     onDeletePicture: (file: BgPicture) => void,
     onChangeLayer : (layer: EditorLayers) => void,
-    onSaveBtnClicked: ()=>void
+    onSaveBtnClicked: ()=>Promise<Error|undefined>
 }
 
 const toolBtns: {tool: EditorTools, txt: string}[] = [{tool: "Drag", txt: "Przesuwanie"},{tool: "ZoomIn", txt: "Przybliż"},{tool: "ZoomOut", txt: "Oddal"},{tool: "Save", txt: "Zapisz"},
@@ -60,7 +60,7 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
             setActivePaletteColor(-1)
             return
             }
-            var p= await EditorPaletteService.GetColorsFromPalette(palettes[activePalette]._id);
+            var p= await EditorPaletteService.GetColorsFromPalette(palettes[activePalette]._id!);
             if(isBackendError(p)){
                 setError(p.message)
                 setPaletteColors([])
@@ -82,7 +82,7 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
 
     const onColorClicked = (e:MouseEvent<HTMLButtonElement>)=>{
         e.preventDefault();
-        const color = pattern.colors.findIndex(x=>x._id.toString()===e.currentTarget.id)
+        const color = pattern.colors.findIndex(x=>x.idInPalettes!.toString()===e.currentTarget.id)
         if(color!=-1) {
             onColorChange(pattern.colors[color])
         }
@@ -90,12 +90,17 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
 
     const onToolClicked = (e:MouseEvent<HTMLButtonElement>)=>{
         e.preventDefault();
-        if(e.currentTarget.id==="Save") onSaveBtnClicked()
+        if(e.currentTarget.id==="Save") onToolClickedSave()
         else if(isEditorTool(e.currentTarget.id)){
             onToolChange(e.currentTarget.id)
             if(e.currentTarget.id=="ImgDrag"||e.currentTarget.id=="ImgScale"||e.currentTarget.id=="ImgDelete") onChangeLayer("Images")
             else if(e.currentTarget.id=="Pencil"||e.currentTarget.id=="Drag"||e.currentTarget.id=="Fill"||e.currentTarget.id=="Erase") onChangeLayer("Beads")
         }
+    }
+    const onToolClickedSave= async()=>{
+        const res=await onSaveBtnClicked()
+        if(res===undefined) setError("")
+        else setError(res.message)
     }
     const onPaletteChanged = (e:ChangeEvent<HTMLSelectElement>) =>{
         e.preventDefault();
@@ -115,10 +120,9 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
     }
     const onNameChanged=(e:ChangeEvent<HTMLInputElement>)=>{
         e.preventDefault();
-        if(e.currentTarget.value.trim()!==""){
-            onRename(e.currentTarget.value)
-        }
-
+        const res=onRename(e.currentTarget.value)
+        if(res===undefined) setError("")
+        else setError(res.message)
     }
     const onPublicChanged=(e:ChangeEvent<HTMLInputElement>)=>{
         //e.preventDefault(); //Problemy z rerenderowaniem po zmianie stanu
@@ -179,7 +183,7 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
         <p>Kolory, wersja tymaczasowa bez palet z bazy:</p>
         <button disabled={colorIndex<=0} onClick={onColorArrowsClick} id="kolorWstecz">&lt;-</button>
         {
-            pattern.colors.slice(Math.floor(colorIndex/10)*10,Math.min((Math.floor(colorIndex/10)+1)*10,pattern.colors.length)).map((x)=><button id={x._id.toString()} key={x._id.toString()} style={{backgroundColor:x.rgb, border: x._id==activeColor._id?"2px solid black":"none"}} onClick={onColorClicked}>&nbsp;&nbsp;</button>)
+            pattern.colors.slice(Math.floor(colorIndex/10)*10,Math.min((Math.floor(colorIndex/10)+1)*10,pattern.colors.length)).map((x)=><button id={x.idInPalettes.toString()} key={x.idInPalettes!.toString()} style={{backgroundColor:x.rgb, border: x.idInPalettes==activeColor.idInPalettes?"2px solid black":"none"}} onClick={onColorClicked}>&nbsp;&nbsp;</button>)
         }
         <button disabled={colorIndex>=pattern.colors.length-1} onClick={onColorArrowsClick}>-&gt;</button><br/>
         Nowy kolor:<select disabled={palettes.length==0} value={activePalette} onChange={onPaletteChanged}>
@@ -195,7 +199,7 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
         <span style={{border:"1px solid black", backgroundColor: activePaletteColor==-1 ? "white":paletteColors[activePaletteColor].rgb}}>&nbsp;&nbsp;&nbsp;&nbsp;</span>
         <button disabled={palettes.length==0 || paletteColors.length==0} onClick={onNewColorAdded}>Dodaj</button>
         <p>Obrazy:</p>
-        <p>Dodaj nowy: <input type={"file"} onChange={ReadLoadedFile} ref={fileinputref} accept={".png,.jpg,.jpeg,image/jpeg,image.png"}/> <button onClick={onClickAddFile} disabled={pattern.pictures.length>=3}>Dodaj</button></p>
+        <p>Dodaj nowy: <input type={"file"} onChange={ReadLoadedFile} ref={fileinputref} accept={".png,.jpg,.jpeg,image/jpeg,image/png"}/> <button onClick={onClickAddFile} disabled={pattern.pictures.length>=3}>Dodaj</button></p>
         <table>
             <tbody>
                 {

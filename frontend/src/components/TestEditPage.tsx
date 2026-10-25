@@ -39,7 +39,7 @@ const EditPage = ()=>{
             <div><h2>Błąd przy pobieraniu wzoru</h2>
             <p>Szczegóły: {error}</p>
             <button onClick={loadPattern}>Spróbuj ponownie</button>
-            </div>:<div style={{height: innerHeight}}><Editor pattern={pattern}></Editor></div>}
+            </div>:<div style={{height: innerHeight}}><Editor pattern={pattern} reload={loadPattern}></Editor></div>}
     </>)
 }
 

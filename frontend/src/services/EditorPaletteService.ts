@@ -19,7 +19,7 @@ export default class EditorPaletteService{
     static async GetColorsFromPalette(id: string): Promise<ShortColor[]|BackendError>{
         try{
             var p= await axios.get<ShortColor[]>(import.meta.env.VITE_API_URL+`/palettes/${id}`)
-            if(p.status===200&&p.data) return p.data
+            if(p.status===200&&p.data) return p.data.map(x=>({...x, idInPalettes: x._id??x.idInPalettes}))
             else return {statusCode: p.status, message: "Nieprzewidziany błąd przy pobieraniu kolorów"}
         }catch(e){
             if(axios.isAxiosError(e) && e.response) return {statusCode: e.response.status, message: e.response.data.message ?? e.response.data.error ?? "Nie udało się pobrać palet"}

@@ -7,6 +7,7 @@
             "@services/*" : ["./src/services/*"],
             "@schemas/*" : ["./src/schemas/*"],
             "@shared/*" : ["../shared/*"],
+            "@utils/*" : ["./src/utils/*"],
         },
          "typeRoots" : ["node_modules/@types"],
          "rewriteRelativeImportExtensions": true,

@@ -28,6 +28,10 @@ class PaletteService{
             index
         }
     }
+    async CheckIfColorExists(id: ObjectId | string): Promise<boolean>{
+        const found = await this.model.findOne({colors:{"$elemMatch":{_id:id}}})
+        return !(found===null)
+    }
 }
 
 
