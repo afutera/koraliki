@@ -6,8 +6,7 @@ import routes from "@plugins/routes.js"
 import cors from '@fastify/cors'
 import auth from "@plugins/auth.js"
 import formdata from "@fastify/multipart"
-import fstatic from "@fastify/static"
-import path from "node:path"
+import setupstatic, {setupDeleteJob} from "@plugins/setupStatic.js"
 
 const port = parseInt(process.env.PORT ?? "3000")
 const host= process.env.HOST ?? "0.0.0.0"
@@ -22,13 +21,12 @@ server.register(db)
 server.register(cors,{origin,methods:"GET,HEAD,POST,PUT,PATCH,DELETE"})
 server.register(formdata)
 server.register(auth)
-server.register(fstatic,{
-    root: path.join(import.meta.dirname,"..","public","pictures"),
-    prefix: "/pictures/"
-})
 
 await server.after()
+server.register(setupstatic)
 server.register(routes)
+
+await server.ready().then(()=>setupDeleteJob(server))
 
 server.listen({port, host},(err, addr)=>{
     if(err){

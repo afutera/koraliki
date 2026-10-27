@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import { FastifyInstance, FastifyPluginOptions, FastifyError, FastifyPluginCallback } from "fastify";
 import fastifyPlugin from "fastify-plugin";
 import AuthService, { type AuthUserInfo } from "@services/AuthService.js";
 import auth from "@fastify/auth"
@@ -15,7 +15,7 @@ declare module 'fastify' {
   }
 }
 
-async function authPlugin (fastify: Fastify.FastifyInstance, opt: Object) {
+const authPlugin: FastifyPluginCallback = (fastify: FastifyInstance, opt: FastifyPluginOptions, done: (error?: FastifyError) => void) => {
     if(process.env.JWT_SECRET===undefined){
         fastify.log.error("Brak JWT_SECRET w pliku .env, nie mozna generować kluczy JWT do autoryzacji.")
         process.exit(1)
@@ -54,6 +54,7 @@ async function authPlugin (fastify: Fastify.FastifyInstance, opt: Object) {
     })
     fastify.register(auth)
     fastify.log.info("Autentykacja JWT wlaczona")
+    done()
 }
 
 export default fastifyPlugin(authPlugin)

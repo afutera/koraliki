@@ -3,6 +3,7 @@ import { type PatternTypeEdit, type PatternTypeInternal, type PatternColorType, 
 import DecodePattern, { type SavePattern, type SavePatternImage} from "@utils/PatternJsonDecoder.js"
 import {PictureFileExists, SavePictureFile} from "@utils/PictureSaver.js"
 import {Readable} from "node:stream"
+import { SizeUnitConversion } from "@utils/SizeUnitConversion.js"
 
 
 export interface PatternsList{
@@ -106,8 +107,21 @@ class PatternService{
             return copy._id
         }else return 403
     }
-    async AddPattern(title: string, author: Types.ObjectId|string, height: number, width: number) : Promise<Types.ObjectId|undefined>{
-        return undefined
+    async AddPattern(title: string, author: Types.ObjectId|string, height: number, width: number, unit: string, palette: Types.ObjectId|string) : Promise<Types.ObjectId|Error>{
+        if(!SizeUnitConversion.UnitExists(unit)) return new Error("Nieznana jednostka.")
+        width=SizeUnitConversion.Convert2Beads(unit,width)
+        height=SizeUnitConversion.Convert2Beads(unit,height)
+        const now = new Date()
+        var pattern=new this.model()
+        pattern.title=title
+        pattern.author=new Types.ObjectId(author)
+        pattern.height=height
+        pattern.width=width
+        pattern.createdAt=pattern.updatedAt=now
+        pattern.isPublic=false
+        pattern.ratingsCount=pattern.ratingsSum=0
+        await pattern.save()
+        return pattern._id
     }
     async UpdatePattern(id: Types.ObjectId|string, user: Types.ObjectId|string, req: SavePatternRequest, colorcheck: (id:Types.ObjectId|string)=>Promise<boolean>): Promise<true|{code:number,err:string}>{
         for (let f of req.files.entries()) {
