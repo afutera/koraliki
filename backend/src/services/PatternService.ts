@@ -4,6 +4,7 @@ import DecodePattern, { type SavePattern, type SavePatternImage} from "@utils/Pa
 import {PictureFileExists, SavePictureFile} from "@utils/PictureSaver.js"
 import {Readable} from "node:stream"
 import { SizeUnitConversion } from "@utils/SizeUnitConversion.js"
+import PaletteService from "./PaletteService.ts"
 
 
 export interface PatternsList{
@@ -107,10 +108,12 @@ class PatternService{
             return copy._id
         }else return 403
     }
-    async AddPattern(title: string, author: Types.ObjectId|string, height: number, width: number, unit: string, palette: Types.ObjectId|string) : Promise<Types.ObjectId|Error>{
+    async AddPattern(title: string, author: Types.ObjectId|string, height: number, width: number, unit: string, palette: Types.ObjectId|string, helpPaletteService: PaletteService) : Promise<Types.ObjectId|Error>{
         if(!SizeUnitConversion.UnitExists(unit)) return new Error("Nieznana jednostka.")
         width=SizeUnitConversion.Convert2Beads(unit,width)
+        if(width>256) return new Error("Szerokość w koralikach nie może być większa od 256.")
         height=SizeUnitConversion.Convert2Beads(unit,height)
+        if(height>256) return new Error("Wysokość w koralikach nie może być większa od 256.")
         const now = new Date()
         var pattern=new this.model()
         pattern.title=title
@@ -120,6 +123,8 @@ class PatternService{
         pattern.createdAt=pattern.updatedAt=now
         pattern.isPublic=false
         pattern.ratingsCount=pattern.ratingsSum=0
+        var colors = await helpPaletteService.getFirstFew(palette, 5);
+        pattern.colors=colors;
         await pattern.save()
         return pattern._id
     }

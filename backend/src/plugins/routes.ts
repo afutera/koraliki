@@ -2,23 +2,12 @@ import Fastify from "fastify";
 import fastifyPlugin from "fastify-plugin";
 import PaletteService from "@services/PaletteService.js";
 import PatternService from "@services/PatternService.js";
-import { Types } from "mongoose";
 import { type SavePatternRequest } from "@services/PatternService.js";
-import {BusboyFileStream} from "@fastify/busboy"
 import stream from "stream"
+import {idSchema, addPatternSchema} from "@schemas/RequestSchemas.js"
 
 async function routes (fastify: Fastify.FastifyInstance, opt: Object) {
   const models=fastify.mongooseModels;
-
-const idSchema = {
-  schema:{
-    params:{
-      properties:{
-          id: {type: "string", pattern: "[0-9A-Fa-f]{24}"}
-      }
-    }
-  }
-}
 
   //PALETY
   fastify.get('/palettes', async (req, res) => {
@@ -49,26 +38,26 @@ const idSchema = {
     res.send(result)
   })
   fastify.post("/patterns/:id/copy",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
-    // @ts-ignore
-      const _id = new Types.ObjectId(req.params.id)
-      const result = await new PatternService(models["patterns"]).CopyPattern(_id, req.currentUser!._id);
+      const result = await new PatternService(models["patterns"]).CopyPattern(req.params.id, req.currentUser!._id);
       if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":"Obraz innego użytkownika"})
       else res.code(201).send({_id: result})
   })
   fastify.get("/patterns/:id/foredit",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
     // @ts-ignore
-      const _id = new Types.ObjectId(req.params.id)
-      const user = undefined
-      const result = await new PatternService(models["patterns"]).GetPatternForEdit(_id, req.currentUser!._id);
+      const result = await new PatternService(models["patterns"]).GetPatternForEdit(req.params.id, req.currentUser!._id);
       if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":"Obraz innego użytkownika"})
       else res.code(200).send(result)
   })
   fastify.get("/patterns/:id",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtCheckButAllow])}, async (req,res)=>{
-    // @ts-ignore
-      const _id = new Types.ObjectId(req.params.id)
-      const result = await new PatternService(models["patterns"]).GetPatternForView(_id, req.currentUser===undefined ? undefined:req.currentUser!._id);
+      const result = await new PatternService(models["patterns"]).GetPatternForView(req.params.id, req.currentUser===undefined ? undefined:req.currentUser!._id);
       if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":"Obraz prywatny innego użytkownika"})
       else res.code(200).send(result)
+  })
+  fastify.post("/patterns",{schema: addPatternSchema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
+      var palettes=new PaletteService(models["palettes"])
+      const result = await new PatternService(models["patterns"]).AddPattern(req.body.title, req.currentUser!._id, req.body.height, req.body.width, req.body.unit, req.body.palette, palettes)
+      if(Error.isError(result)) res.code(400).send({message: result.message})
+      else res.code(201).send({_id:result})
   })
   fastify.patch("/patterns/:id",{preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
     const parts=req.parts()
@@ -90,9 +79,7 @@ const idSchema = {
     
   })
   fastify.delete("/patterns/:id",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
-    // @ts-ignore
-    const _id = new Types.ObjectId(req.params.id)
-      const result = await new PatternService(models["patterns"]).DeletePattern(_id, req.currentUser!._id);
+      const result = await new PatternService(models["patterns"]).DeletePattern(req.params.id, req.currentUser!._id);
       res.code(result)
       if(result===204) res.send(undefined)
       else if(result==404) res.send({message:"Nie znaleziono obrazu"})
