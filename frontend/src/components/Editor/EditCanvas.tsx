@@ -208,14 +208,14 @@ onImgMoved: (f: BgPicture, x: number, y: number, scale: number)=>void})=>{
                 {scrollbar.hvisible && <Rect y={rulerwidth+size.patternh} x={0} width={size.width} height={scrollwidth+scrollpadding} fill="#a0a0a0"/>}
                 {
                     grid.filter(line=>line.axis==="x" && line.coord>=scale.startx).map((line,key)=><>
-                    <Line key={'line'+key} stroke="#a0a0a0" strokeWidth={1} points={[(line.coord-scale.startx)*size.beadRadius*2+rulerwidth, 0, (line.coord-scale.startx)*size.beadRadius*2+rulerwidth, size.height]}/>
-                    <Text key={'label'+key} stroke="#000000" fontSize={12} text={line.text} x={(line.coord-scale.startx)*size.beadRadius*2+rulerwidth-4} y={0}/>
+                    <Line key={'linex'+key} stroke="#a0a0a0" strokeWidth={1} points={[(line.coord-scale.startx)*size.beadRadius*2+rulerwidth, 0, (line.coord-scale.startx)*size.beadRadius*2+rulerwidth, size.height]}/>
+                    <Text key={'labelx'+key} stroke="#000000" fontSize={12} text={line.text} x={(line.coord-scale.startx)*size.beadRadius*2+rulerwidth-4} y={0}/>
                     </>)
                 }
                 {
-                    grid.filter(line=>line.axis==="x" && line.coord>=scale.starty).map((line,key)=><>
-                        <Line key={'line'+key} stroke="#a0a0a0" strokeWidth={1} points={[0, (line.coord-scale.starty)*size.beadRadius*2+rulerwidth, size.width, (line.coord-scale.starty)*size.beadRadius*2+rulerwidth]}/>
-                        <Text key={'label'+key} stroke="#000000" fontSize={12} text={line.text} x={0} y={(line.coord-scale.starty)*size.beadRadius*2+rulerwidth+4} rotation={-90}/>
+                    grid.filter(line=>line.axis==="y" && line.coord>=scale.starty).map((line,key)=><>
+                        <Line key={'liney'+key} stroke="#a0a0a0" strokeWidth={1} points={[0, (line.coord-scale.starty)*size.beadRadius*2+rulerwidth, size.width, (line.coord-scale.starty)*size.beadRadius*2+rulerwidth]}/>
+                        <Text key={'labely'+key} stroke="#000000" fontSize={12} text={line.text} x={0} y={(line.coord-scale.starty)*size.beadRadius*2+rulerwidth+4} rotation={-90}/>
                     </>)
                 }
             </Layer>
