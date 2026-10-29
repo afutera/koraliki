@@ -7,3 +7,10 @@ export function UnitExists(unit: string): unit is SizeUnits {
 export function GetAllUnits(): SizeUnits[]{
         return [SizeUnits.BEAD, SizeUnits.STANDARD_BOARD]
     }
+export function GetLabel(unit: SizeUnits): string{
+    switch(unit){
+        case SizeUnits.BEAD: return "koraliki"
+        case SizeUnits.STANDARD_BOARD: return "podkładki"
+        default: return "Nieznana jednostka"
+    }
+}

@@ -17,7 +17,7 @@ class PaletteService{
         }
         const now=new Date()
         var palette= await this.model.aggregate([{"$match":{_id:id}},{"$project":{colors:1}}]).unwind("colors")
-        .match({"$and":[{"$or":[{"colors.fromTime":{"$exists":false}},{"colors.fromTime":{"$lte":now}}]},{"$or":[{"colors.toTime":{"$exists":false}},{"colors.fromTime":{"$gte":now}}]}]})
+        .match({"$and":[{"$or":[{"colors.fromTime":{"$exists":false}},{"colors.fromTime":{"$lte":now}}]},{"$or":[{"colors.toTime":{"$exists":false}},{"colors.toTime":{"$gte":now}}]}]})
         .project({"colors.fromTime":0,"colors.toTime":0}).exec()
         if(palette===null) return new Array<PaletteColorType>()
         return palette.map(x=>x.colors)
@@ -37,8 +37,11 @@ class PaletteService{
     }
     async getFirstFew(id: ObjectId | string, amt: number): Promise<PatternColorType[]>{
         const now=new Date()
+        if(typeof id==="string"){
+            id=new ObjectId(id)
+        }
         const res = await this.model.aggregate([{"$match":{_id:id}},{"$project":{colors:1}}]).unwind("colors")
-        .match({"$and":[{"$or":[{"colors.fromTime":{"$exists":false}},{"colors.fromTime":{"$lte":now}}]},{"$or":[{"colors.toTime":{"$exists":false}},{"colors.fromTime":{"$gte":now}}]}]})
+        .match({"$and":[{"$or":[{"colors.fromTime":{"$exists":false}},{"colors.fromTime":{"$lte":now}}]},{"$or":[{"colors.toTime":{"$exists":false}},{"colors.toTime":{"$gte":now}}]}]})
         .limit(amt).project({"colors.fromTime":0,"colors.toTime":0}).exec()
         return res.map((x,index)=>{const {_id, ...c} = x.colors; return {...c, idInPalettes: _id, index}})
     }

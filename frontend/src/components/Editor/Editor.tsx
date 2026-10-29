@@ -5,7 +5,7 @@ import EditPanel from "./EditPanel.tsx"
 import { useState, useRef } from "react"
 import { type EditorLayers, type EditorTools } from "@interfaces/enums.ts"
 import {imageDimensionsFromStream} from 'image-dimensions';
-import EditorPatternService from "../../services/EditorPatternService.ts"
+import EditorPatternService from "@services/EditorPatternService.ts"
 import { isBackendError } from "@interfaces/errors.ts"
 
 const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{

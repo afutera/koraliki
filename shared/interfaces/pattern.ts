@@ -1,3 +1,5 @@
+import { SizeUnits } from "./patternsizeunits.js"
+
 export interface SharedPatternColor<IdType>{
     _id?: IdType,
     idInPalettes: IdType
@@ -40,4 +42,12 @@ export interface SharedGalleryPattern<IdType, BeadKeyType,
 ColorType extends SharedPatternColor<IdType>> extends GenericSharedPattern<IdType,BeadKeyType,ColorType>{
     authorName: string,
     rating: number,
+}
+
+export interface AddPatternRequest{
+    title: string,
+    height: number,
+    width: number,
+    unit: SizeUnits,
+    palette: string
 }

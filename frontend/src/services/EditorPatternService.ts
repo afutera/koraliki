@@ -2,6 +2,7 @@ import type { BackendError } from "@interfaces/errors";
 import type { BgPictureApi, Pattern, ShortColor } from "@interfaces/pattern";
 import axios from "axios";
 import BeadObject2Map from "../utils/BeadObject2Map";
+import type { AddPatternRequest } from "@shared/interfaces/pattern";
 
 interface UnmappedEditPattern{
     _id: string,
@@ -57,12 +58,20 @@ export default class EditorPatternService{
             if(p.status===205) return true
             else return {statusCode: p.status, message: "Nieprzewidziany błąd przy pobieraniu wzoru"}
         }catch(e){
-            if(axios.isAxiosError(e) && e.response) return {statusCode: e.response.status, message: e.response.data.message ?? e.response.data.error ?? "Nie udało się pobrać wzorów"}
-            else {
-
-                return {statusCode: 500, message: "Nieznany błąd"}
-            }
+            if(axios.isAxiosError(e) && e.response) return {statusCode: e.response.status, message: e.response.data.message ?? e.response.data.error ?? "Nie udało się zapisać wzoru"}
+            else return {statusCode: 500, message: "Nieznany błąd"}
         }
-        return true
+    }
+    static async AddPattern(pattern: AddPatternRequest): Promise<string|BackendError> //string to id
+    {
+        const jwt="aaa"
+        try{
+            var res=await axios.post<{_id:string}>(import.meta.env.VITE_API_URL+"/patterns",pattern,{headers:{"auth":jwt}})
+            if(res.status==201 && res.data) return res.data._id
+            else return {statusCode:res.status, message:"Nieznany błąd"}
+        }catch(e){
+            if(axios.isAxiosError(e) && e.response) return {statusCode: e.response.status, message: e.response.data.message ?? e.response.data.error ?? "Nie udało się utworzyć wzoru"}
+            else return {statusCode:500, message:"Nieznany błąd"}
+        }
     }
 }

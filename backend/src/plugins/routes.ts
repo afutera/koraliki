@@ -5,6 +5,7 @@ import PatternService from "@services/PatternService.js";
 import { type SavePatternRequest } from "@services/PatternService.js";
 import stream from "stream"
 import {idSchema, addPatternSchema} from "@schemas/RequestSchemas.js"
+import { type AddPatternRequest } from "@shared/interfaces/pattern.js";
 
 async function routes (fastify: Fastify.FastifyInstance, opt: Object) {
   const models=fastify.mongooseModels;
@@ -17,8 +18,7 @@ async function routes (fastify: Fastify.FastifyInstance, opt: Object) {
   })
   fastify.get('/palettes/:id', idSchema, async (req, res) => {
     // @ts-ignore
-        const colors=await new PaletteService(models["palettes"]).GetShortColorsFormPalette(req.params.id) //req.params ma schemat, o co mu chodzi???
-        
+        const colors=await new PaletteService(models["palettes"]).GetShortColorsFormPalette(req.params.id) //req.params ma schemat, o co mu chodzi??
         if(colors.length==0) res.code(400).send({message:"Brak kolorów w palecie!"})
         else res.send(colors)
   })
@@ -53,7 +53,7 @@ async function routes (fastify: Fastify.FastifyInstance, opt: Object) {
       if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":"Obraz prywatny innego użytkownika"})
       else res.code(200).send(result)
   })
-  fastify.post("/patterns",{schema: addPatternSchema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
+  fastify.post<{Body:AddPatternRequest}>("/patterns",{schema: addPatternSchema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
       var palettes=new PaletteService(models["palettes"])
       const result = await new PatternService(models["patterns"]).AddPattern(req.body.title, req.currentUser!._id, req.body.height, req.body.width, req.body.unit, req.body.palette, palettes)
       if(Error.isError(result)) res.code(400).send({message: result.message})

@@ -3,7 +3,7 @@ import type { PaletteHeader } from "@interfaces/palette"
 import { type EditorTools, isEditorTool, type EditorLayers } from "@interfaces/enums"
 import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent } from "react"
 import { isBackendError } from "@interfaces/errors"
-import EditorPaletteService from "../../services/EditorPaletteService"
+import EditorPaletteService from "@services/EditorPaletteService"
 
 interface EditPanelProps{
     pattern: Pattern,
