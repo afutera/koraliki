@@ -20,6 +20,7 @@ FRONT_URL=http://localhost:5173 <- Adres frontendu do celów CORS (domyślnie do
 PORT=3000 <- na którym porcie ma nasłuchiwać backend (domyślnie 3000)
 HOST=localhost <- na którym adresie nasłuchiwać (domyślnie wszystkie)
 SALT_ROUNDS=10 <- współczynnik do algorytmu haszowania haseł (domyślnie 10)
+CLEANUP_INTERVAL=60 <- czas (w minutach), co który są usuwane nieużywane pliki użytkowników (domyślnie 60 minut, pierwsze podejście zawsze przy starcie serwera)
 
 ### Frontend 
 API_URL= http://localhost:3000 <- adres backendu

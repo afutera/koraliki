@@ -34,12 +34,14 @@ const setupPublic = (fastify: FastifyInstance, opt: Object, done: (error?: Fasti
     }else afterFolderExists(fastify,done)
 }
 export function setupDeleteJob(fastify: FastifyInstance){
+    let interval = process.env.CLEANUP_INTERVAL === undefined ? 60 : parseInt(process.env.CLEANUP_INTERVAL)
+    if(isNaN(interval)) interval=60
     const model=fastify.mongooseModels["patterns"]
     const task = new AsyncTask("rm_patterns",()=>{
         fastify.log.info("Usuwanie nieuzywanych plikow z katalogu publicznego")
         return checkPictures(model)
     },(err)=>{fastify.log.error("Błąd przy czyszczeniu katalogu publicznego:"+err.message)})
-    const job = new SimpleIntervalJob({minutes: 60, runImmediately: true},task)
+    const job = new SimpleIntervalJob({minutes: interval, runImmediately: true},task)
     fastify.scheduler.addSimpleIntervalJob(job)
 }
 
