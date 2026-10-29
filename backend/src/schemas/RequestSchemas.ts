@@ -9,6 +9,9 @@ export const idSchema = {
     }
   }
 }
+export interface IdParams{
+    Params:{id:string}
+}
 
 export const addPatternSchema = {
     body:{

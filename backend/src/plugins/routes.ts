@@ -4,7 +4,7 @@ import PaletteService from "@services/PaletteService.js";
 import PatternService from "@services/PatternService.js";
 import { type SavePatternRequest } from "@services/PatternService.js";
 import stream from "stream"
-import {idSchema, addPatternSchema} from "@schemas/RequestSchemas.js"
+import {idSchema, addPatternSchema, type IdParams} from "@schemas/RequestSchemas.js"
 import { type AddPatternRequest } from "@shared/interfaces/pattern.js";
 
 async function routes (fastify: Fastify.FastifyInstance, opt: Object) {
@@ -16,39 +16,35 @@ async function routes (fastify: Fastify.FastifyInstance, opt: Object) {
         if(palettes.length==0) res.code(400).send({message:"Brak zdefiniowanych palet!"})
         else res.send(palettes)
   })
-  fastify.get('/palettes/:id', idSchema, async (req, res) => {
-    // @ts-ignore
+  fastify.get<IdParams>('/palettes/:id', idSchema, async (req, res) => {
         const colors=await new PaletteService(models["palettes"]).GetShortColorsFormPalette(req.params.id) //req.params ma schemat, o co mu chodzi??
         if(colors.length==0) res.code(400).send({message:"Brak kolorów w palecie!"})
         else res.send(colors)
   })
   //WZORY
-  fastify.get("/patterns/all", async (req, res)=>{
+  fastify.get<IdParams>("/patterns/all", async (req, res)=>{
     const result = await new PatternService(models["patterns"]).GetGalleryPatterns(1,{});
     res.send(result)
   })
   fastify.get("/patterns/user/me",{preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req, res)=>{
-// @ts-ignore
     const result = await new PatternService(models["patterns"]).GetProfilePatterns(req.currentUser!._id,req.currentUser!._id,1,{});
     res.send(result)
   })
-  fastify.get("/patterns/user/:id",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtCheckButAllow])}, async (req, res)=>{
-// @ts-ignore
+  fastify.get<IdParams>("/patterns/user/:id",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtCheckButAllow])}, async (req, res)=>{
     const result = await new PatternService(models["patterns"]).GetProfilePatterns(req.params.id,req.currentUser===undefined ? undefined:req.currentUser!._id,1,{});
     res.send(result)
   })
-  fastify.post("/patterns/:id/copy",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
+  fastify.post<IdParams>("/patterns/:id/copy",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
       const result = await new PatternService(models["patterns"]).CopyPattern(req.params.id, req.currentUser!._id);
       if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":"Obraz innego użytkownika"})
       else res.code(201).send({_id: result})
   })
-  fastify.get("/patterns/:id/foredit",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
-    // @ts-ignore
+  fastify.get<IdParams>("/patterns/:id/foredit",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
       const result = await new PatternService(models["patterns"]).GetPatternForEdit(req.params.id, req.currentUser!._id);
       if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":"Obraz innego użytkownika"})
       else res.code(200).send(result)
   })
-  fastify.get("/patterns/:id",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtCheckButAllow])}, async (req,res)=>{
+  fastify.get<IdParams>("/patterns/:id",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtCheckButAllow])}, async (req,res)=>{
       const result = await new PatternService(models["patterns"]).GetPatternForView(req.params.id, req.currentUser===undefined ? undefined:req.currentUser!._id);
       if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":"Obraz prywatny innego użytkownika"})
       else res.code(200).send(result)
@@ -59,7 +55,7 @@ async function routes (fastify: Fastify.FastifyInstance, opt: Object) {
       if(Error.isError(result)) res.code(400).send({message: result.message})
       else res.code(201).send({_id:result})
   })
-  fastify.patch("/patterns/:id",{preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
+  fastify.patch<IdParams>("/patterns/:id",{preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
     const parts=req.parts()
     const mappedreq: SavePatternRequest = {patternJson:"", files: new Map<string,{stream: stream.Readable, type: string}>()}
     for await (const p of parts){
@@ -72,13 +68,12 @@ async function routes (fastify: Fastify.FastifyInstance, opt: Object) {
       else res.code(400).send({message:`Niepoprawny klucz ${p.fieldname}`})
     }
     const paletteservice=new PaletteService(models["palettes"])
-    // @ts-ignore
     const result=await new PatternService(models["patterns"]).UpdatePattern(req.params.id, req.currentUser?._id!, mappedreq, async (x)=>{return await paletteservice.CheckIfColorExists(x)})
     if(result===true) res.code(205).send()
     else res.code(result.code).send({message:result.err})
     
   })
-  fastify.delete("/patterns/:id",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
+  fastify.delete<IdParams>("/patterns/:id",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
       const result = await new PatternService(models["patterns"]).DeletePattern(req.params.id, req.currentUser!._id);
       res.code(result)
       if(result===204) res.send(undefined)
