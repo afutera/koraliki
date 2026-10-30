@@ -1,6 +1,6 @@
 import { SharedImage, SharedPatternColor } from "@shared/interfaces/pattern.js"
 import {Ajv} from "ajv"
-import { isParameter } from "typescript"
+import language from "@utils/ajv-language.js"
 
 export interface SavePatternImage extends SharedImage<string>{
     isLocal: boolean
@@ -100,6 +100,7 @@ export default function decode(jsonPattern: string): SavePattern|Error{
         if(errstring.length>0) return new Error(errstring)
         return res
     }else{
+        language(validate.errors)
         return new Error(ajv.errorsText(validate.errors))
     }
     } catch(e) {return new Error("Błąd podczas walidacji")}

@@ -7,6 +7,7 @@ import cors from '@fastify/cors'
 import auth from "@plugins/auth.js"
 import formdata from "@fastify/multipart"
 import setupstatic, {setupDeleteJob} from "@plugins/setupStatic.js"
+import localize from "@utils/ajv-language.js"
 
 const port = parseInt(process.env.PORT ?? "3000")
 const host= process.env.HOST ?? "0.0.0.0"
@@ -14,7 +15,12 @@ const origin = process.env.FRONT_URL ?? true
 
 const server=Fastify({
     logger: true,
-    requestTimeout: 10000
+    requestTimeout: 10000,
+})
+
+server.setSchemaErrorFormatter((err,data)=>{
+    localize(err)
+    return new Error(err.map(e=>("Pole "+e.instancePath.substring(e.instancePath.lastIndexOf("/")+1)+": "+e.message).trim()).join(", "))
 })
 
 server.register(db)
