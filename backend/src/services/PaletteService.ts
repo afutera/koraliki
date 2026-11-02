@@ -1,7 +1,8 @@
 import {ObjectId} from "mongodb"
 import { Model} from "mongoose"
-import { type PaletteType, type PaletteColorType } from "@schemas/Palette.js"
+import { type PaletteType, type PaletteColorType, type ColorWithPalette } from "@schemas/Palette.js"
 import { type PatternColorType } from "@schemas/Pattern.js"
+
 
 class PaletteService{
     model: Model<PaletteType>
@@ -44,6 +45,13 @@ class PaletteService{
         .match({"$and":[{"$or":[{"colors.fromTime":{"$exists":false}},{"colors.fromTime":{"$lte":now}}]},{"$or":[{"colors.toTime":{"$exists":false}},{"colors.toTime":{"$gte":now}}]}]})
         .limit(amt).project({"colors.fromTime":0,"colors.toTime":0}).exec()
         return res.map((x,index)=>{const {_id, ...c} = x.colors; return {...c, idInPalettes: _id, index}})
+    }
+    async getColorDataWithPalette(id: ObjectId | string): Promise<ColorWithPalette|undefined>{
+        if(typeof id==="string"){
+            id=new ObjectId(id)
+        }
+        let res= await this.model.aggregate<ColorWithPalette>().match({"colors._id":id}).unwind("colors").match({"colors._id":id}).limit(1).exec()
+        if(res.length>0) return res[0]
     }
 }
 

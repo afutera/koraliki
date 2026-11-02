@@ -22,9 +22,13 @@ export interface SavePatternRequest{
 class PatternService{
     static readonly PATTERNS_PER_PAGE=20
     model: Model<PatternTypeInternal>
+    helpPaletteService?: PaletteService = undefined
+
     constructor(model: Model<PatternTypeInternal>){
         this.model=model
     }
+    setPaletteService(service: PaletteService) {this.helpPaletteService=service}
+
 
     async GetGalleryPatterns(page: number, searchOptions: any): Promise<PatternsList>{
         if(page<1) page=1
@@ -75,7 +79,7 @@ class PatternService{
         if(p.isPublic || p.author.equals(user)){
             p=await p.populate([{path:'author',select:'username'}]);
             //@ts-ignore
-            let{ images, ratingsCount, ratingsSum, author, ...el}={...p._doc}
+            let{ pictures, ratingsCount, ratingsSum, author, ...el}={...p._doc}
             if(ratingsSum==undefined) ratingsSum=0;
             if(ratingsCount==undefined) ratingsCount=0;
             return {...el, rating: ratingsCount==0 ? 0:+(ratingsSum/ratingsCount).toFixed(1), author: author._id, authorName: author.username}
@@ -89,6 +93,21 @@ class PatternService{
         if(p.author.equals(user)){
             return p
         }else return 403
+    }
+    async getPatternWithBeadCount(pattern: Types.ObjectId|string, user: Types.ObjectId|string|undefined){
+        if(this.helpPaletteService===undefined) return 500
+        let result=await this.GetPatternForView(pattern,user)
+        if(typeof result == "number") return result
+        let colorStats = new Map<number,number>()
+        result.beads.forEach((x)=>{
+            colorStats.set(x, (colorStats.get(x) ?? 0)+1)
+        })
+        let withcolordata: {index:number,count:number, rgb: string, desc:string}[] = []
+        for(let col of result.colors){
+            let info=await this.helpPaletteService?.getColorDataWithPalette(col.id)
+            withcolordata.push({index: col.index, count:colorStats.get(col.index)??0, rgb: col.rgb, desc: info===undefined ? col.name:(info.name+" - "+info.colors.name)})
+        }
+        return {pattern: result, colorStats: withcolordata}
     }
     async CopyPattern(pattern: Types.ObjectId|string, user: Types.ObjectId|string): Promise<Types.ObjectId|404|403>{
         if(typeof pattern ==="string") pattern=new Types.ObjectId(pattern)
@@ -108,7 +127,8 @@ class PatternService{
             return copy._id
         }else return 403
     }
-    async AddPattern(title: string, author: Types.ObjectId|string, height: number, width: number, unit: string, palette: Types.ObjectId|string, helpPaletteService: PaletteService) : Promise<Types.ObjectId|Error>{
+    async AddPattern(title: string, author: Types.ObjectId|string, height: number, width: number, unit: string, palette: Types.ObjectId|string) : Promise<Types.ObjectId|Error>{
+        if(this.helpPaletteService===undefined) return new Error("Nie dostarczono palet")
         if(!SizeUnitConversion.UnitExists(unit)) return new Error("Nieznana jednostka.")
         width=SizeUnitConversion.Convert2Beads(unit,width)
         if(width>256) return new Error("Szerokość w koralikach nie może być większa od 256.")
@@ -123,12 +143,13 @@ class PatternService{
         pattern.createdAt=pattern.updatedAt=now
         pattern.isPublic=false
         pattern.ratingsCount=pattern.ratingsSum=0
-        var colors = await helpPaletteService.getFirstFew(palette, 5);
+        var colors = await this.helpPaletteService.getFirstFew(palette, 5);
         pattern.colors=colors;
         await pattern.save()
         return pattern._id
     }
     async UpdatePattern(id: Types.ObjectId|string, user: Types.ObjectId|string, req: SavePatternRequest, colorcheck: (id:Types.ObjectId|string)=>Promise<boolean>): Promise<true|{code:number,err:string}>{
+        if(this.helpPaletteService===undefined) return {code:500, err:"Nie dostarczono palet"}
         for (let f of req.files.entries()) {
             if(f[1].type!=="image/png"&&f[1].type!="image/jpeg") return {code:400,err:`Plik ${f[0]} musi być .png lub .jpg`}
         }
@@ -143,7 +164,7 @@ class PatternService{
         const remove: number[]=[]
         for(const x of reqpattern.colors){
             if(!beadmapforfilter.some(y=>y[1]===x.index)) remove.push(x.index)
-            else if(!(await colorcheck(x.idInPalettes))) return {code:400,err:`Brak koloru ${x.name} w paletach`}
+            else if(!(await this.helpPaletteService.CheckIfColorExists(x.idInPalettes))) return {code:400,err:`Brak koloru ${x.name} w paletach`}
         }
         reqpattern.colors=reqpattern.colors.filter(x=>!remove.includes(x.index))
         const translate=reqpattern.colors.map(x=>x.index)

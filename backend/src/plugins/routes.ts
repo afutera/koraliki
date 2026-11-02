@@ -44,14 +44,22 @@ async function routes (fastify: Fastify.FastifyInstance, opt: Object) {
       if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":"Obraz innego użytkownika"})
       else res.code(200).send(result)
   })
+  fastify.get<IdParams>("/patterns/:id/withcount",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
+      const service=new PatternService(models["patterns"])
+      service.setPaletteService(new PaletteService(models["palettes"]))
+      const result = await service.getPatternWithBeadCount(req.params.id, req.currentUser!._id);
+      if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":(result==403?"Obraz innego użytkownika":"Błąd serwera")})
+      else res.code(200).send(result)
+  })
   fastify.get<IdParams>("/patterns/:id",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtCheckButAllow])}, async (req,res)=>{
       const result = await new PatternService(models["patterns"]).GetPatternForView(req.params.id, req.currentUser===undefined ? undefined:req.currentUser!._id);
       if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":"Obraz prywatny innego użytkownika"})
       else res.code(200).send(result)
   })
   fastify.post<{Body:AddPatternRequest}>("/patterns",{schema: addPatternSchema, preHandler: fastify.auth([fastify.jwtIsLoggedIn])}, async (req,res)=>{
-      var palettes=new PaletteService(models["palettes"])
-      const result = await new PatternService(models["patterns"]).AddPattern(req.body.title, req.currentUser!._id, req.body.height, req.body.width, req.body.unit, req.body.palette, palettes)
+      const service = new PatternService(models["patterns"])
+      service.setPaletteService(new PaletteService(models["palettes"]))
+      const result = await service.AddPattern(req.body.title, req.currentUser!._id, req.body.height, req.body.width, req.body.unit, req.body.palette)
       if(Error.isError(result)) res.code(400).send({message: result.message})
       else res.code(201).send({_id:result})
   })
@@ -67,8 +75,9 @@ async function routes (fastify: Fastify.FastifyInstance, opt: Object) {
       else if(p.fieldname==="pattern") mappedreq.patternJson=`${p.value}`
       else res.code(400).send({message:`Niepoprawny klucz ${p.fieldname}`})
     }
-    const paletteservice=new PaletteService(models["palettes"])
-    const result=await new PatternService(models["patterns"]).UpdatePattern(req.params.id, req.currentUser?._id!, mappedreq, async (x)=>{return await paletteservice.CheckIfColorExists(x)})
+    const service=new PatternService(models["patterns"])
+    service.setPaletteService(new PaletteService(models["palettes"]))
+    const result=await service.UpdatePattern(req.params.id, req.currentUser?._id!, mappedreq)
     if(result===true) res.code(205).send()
     else res.code(result.code).send({message:result.err})
     

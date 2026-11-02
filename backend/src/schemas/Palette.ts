@@ -1,8 +1,11 @@
 import mongoose, { Types } from "mongoose";
-import {SharedPalette, type SharedPaletteColor} from "@shared/interfaces/palette.js"
+import {SharedPalette, SharedPaletteHeader, type SharedPaletteColor} from "@shared/interfaces/palette.js"
 
 interface PaletteColorType extends SharedPaletteColor<Types.ObjectId>{}
 interface PaletteType extends SharedPalette<Types.ObjectId,PaletteColorType>{}
+interface ColorWithPalette extends SharedPaletteHeader<Types.ObjectId>{
+    colors: PaletteColorType
+}
 
 const paletteSchema =new mongoose.Schema<PaletteType>({
     name: {type: String, required: true},
@@ -15,4 +18,4 @@ const paletteSchema =new mongoose.Schema<PaletteType>({
     })]
 })
 
-export { paletteSchema, type PaletteType, type PaletteColorType }
+export { paletteSchema, type PaletteType, type PaletteColorType, type ColorWithPalette }
