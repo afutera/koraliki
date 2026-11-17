@@ -3,8 +3,7 @@
     background-color: lavender;
     box-sizing: border-box;
     padding: 1%;
-    margin-right: 2%;
-    margin-left: 2%;
+    margin: 1% auto;
     border-radius: 10px;
     border: 2px solid purple;
 }

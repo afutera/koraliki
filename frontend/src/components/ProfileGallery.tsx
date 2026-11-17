@@ -48,7 +48,7 @@ const ProfileGallery = ()=>{
 
     return (<div className="Gallery container-fluid">
         <div className="row justify-content-center"><p className="pageControl">Strona {results.pageNo} z {results.pageCount}</p></div>
-        <div className="row justify-content-between mx-3">{
+        <div className="row justify-content-start mx-3">{
             results.results.map(x=>
                 <MyPatternThumbnail key={"pattern_"+x._id} pattern={x} onDelete={onDelete} onCopy={onCopy} onEdit={onEdit}/>
             )

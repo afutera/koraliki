@@ -16,13 +16,13 @@ const MyPatternThumbnail = ({pattern, onDelete, onCopy, onEdit}: {pattern: Short
         if(pattern._id!==undefined) onEdit(pattern._id)
     }
 
-    return (<div className="PatternThumbnail col-5 col-md-3 col-lg-2 m-1">
+    return (<div className="col-5 col-md-3 col-lg-2"><div className="PatternThumbnail">
         <ReadOnlyCanvas pattern={pattern}/>
         <p className="title">{pattern.title}</p>
         <span>{pattern.isPublic ? "Publiczny":"Prywatny"}</span>
         <span>&#9734;{pattern.rating}</span>
         <p><button>Otwórz</button><button onClick={onClickEdit}>Edytuj</button><button onClick={onClickCopy}>Kopiuj</button><button onClick={onClickDelete}>Usuń</button></p>
-    </div>)
+    </div></div>)
 }
 
 export default MyPatternThumbnail

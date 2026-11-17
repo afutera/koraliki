@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 
 const ReadOnlyCanvas = ({pattern}:{pattern:ShortPattern|Pattern})=>{
 
-    const  [size,setSize]=useState({beadRadius: 1, width: pattern.width, startx: 0, starty: 0})
+    const  [size,setSize]=useState({beadRadius: 1, width: 100, startx: 0, starty: 0})
     const containerRef = useRef<HTMLDivElement|null>(null);
 
     const newSize = ()=>{
