@@ -4,6 +4,7 @@ import { type EditorTools, isEditorTool, type EditorLayers } from "@interfaces/e
 import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent } from "react"
 import { isBackendError } from "@interfaces/errors"
 import EditorPaletteService from "@services/EditorPaletteService"
+import {LayerTypeIcon, LayerIcon, ToolTypeIcon, BigDeleteImgIcon, BigAddImgIcon, BigAddColorIcon } from "@components/Editor/Icons"
 
 interface EditPanelProps{
     pattern: Pattern,
@@ -21,10 +22,7 @@ interface EditPanelProps{
     onSaveBtnClicked: ()=>Promise<Error|undefined>
 }
 
-const toolBtns: {tool: EditorTools, txt: string}[] = [{tool: "Drag", txt: "Przesuwanie"},{tool: "ZoomIn", txt: "Przybliż"},{tool: "ZoomOut", txt: "Oddal"},{tool: "Save", txt: "Zapisz"},
-        {tool: "Pencil", txt: "Ołówek"},{tool: "Line", txt: "Linia"},{tool: "Fill", txt: "Wypełnienie"},{tool: "Erase", txt: "Gumka"},
-        {tool: "ImgDrag", txt: "Przesuń"},{tool: "ImgScale", txt: "Skaluj"},{tool: "ImgDelete", txt: "Usuń"}
-]
+const toolBtns: EditorTools[] = ["Drag","ZoomIn","ZoomOut","Save","Pencil","Line","Fill","Erase","ImgDrag","ImgScale","ImgDelete"]
 
 const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange, onToolChange, onNewColor, onRename, onSetPublic, onAddPicture, onDeletePicture, onChangeLayer, onSaveBtnClicked}:EditPanelProps) =>{
 
@@ -163,52 +161,50 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
         onChangeLayer(e.currentTarget.id=="imgLayerBtn" ? "Images":"Beads")
     }
 
-    return (<div className="editPanel">
-        <p>Warstwy: <button id="imgLayerBtn" className={activeLayer=="Images"?"activeToolBtn":""} onClick={onClickLayerChange}>Obrazy</button>
-        <button id="beadLayerBtn" className={activeLayer=="Beads"?"activeToolBtn":""} onClick={onClickLayerChange}>Koraliki</button></p>
-        <p>Tytuł:<input type="text" value={pattern.title} onChange={onNameChanged}/></p>
-        <p>Publiczny:<input type="checkbox" checked={pattern.isPublic} onChange={onPublicChanged}/></p>
-        <p>Narzędzia:</p>
+    return (<div className="editPanel container">
+        <p><LayerIcon/> Warstwy: <button id="imgLayerBtn" className={"btn "+(activeLayer=="Images"?"activeToolBtn":"btn-secondary")} onClick={onClickLayerChange}><LayerTypeIcon forButton="Images"/></button>
+        <button id="beadLayerBtn" className={"btn "+(activeLayer=="Beads"?"activeToolBtn":"btn-secondary")} onClick={onClickLayerChange}><LayerTypeIcon forButton="Beads"/></button></p>
+        <div className="row"><label className="col-12 col-md-3" htmlFor="title">Tytuł:</label><input type="text" value={pattern.title} onChange={onNameChanged} id="title" className="col-11 col-md-8 form-input"/></div>
+        <div className="row"><label className="col-9 col-md-3" htmlFor="isPublic">Publiczny:</label><div className="form-check form-switch col-3" style={{paddingLeft:0}}>
+        <input type="checkbox" checked={pattern.isPublic} onChange={onPublicChanged} className="form-check-input" id="isPublic" style={{marginLeft:"2px"}}/></div></div>
+        <h3>Narzędzia:</h3>
+        <div className="row">
+        <div>{
+            toolBtns.slice(0,4).map(x=><button id={x} key={"btn"+x} onClick={onToolClicked} className={"btn "+(activeTool==x?"activeToolBtn":"btn-secondary")}><ToolTypeIcon forButton={x}/></button>)
+        }</div>
+        <div>{
+            toolBtns.slice(4,8).map(x=><button id={x} key={"btn"+x} onClick={onToolClicked} className={"btn "+(activeTool==x?"activeToolBtn":"btn-secondary")}><ToolTypeIcon forButton={x}/></button>)
+        }</div>
+        <div>{
+            toolBtns.slice(8,11).map(x=><button id={x} key={"btn"+x} onClick={onToolClicked} className={"btn "+(activeTool==x?"activeToolBtn":"btn-secondary")}><ToolTypeIcon forButton={x}/></button>)
+        }</div></div>
+        <h3>Kolory:</h3>
+        <div><button disabled={colorIndex<=0} onClick={onColorArrowsClick} id="kolorWstecz" className="btn btn-secondary">&larr;</button>
         {
-            toolBtns.slice(0,4).map(x=><button id={x.tool} key={"btn"+x.tool} onClick={onToolClicked} className={activeTool==x.tool?"activeToolBtn":""}>{x.txt}</button>)
+            pattern.colors.slice(Math.floor(colorIndex/10)*10,Math.min((Math.floor(colorIndex/10)+1)*10,pattern.colors.length)).map((x)=><button id={x.idInPalettes.toString()} className="btn" key={x.idInPalettes!.toString()} style={{backgroundColor:x.rgb, border: x.idInPalettes==activeColor.idInPalettes?"2px solid black":"none"}} onClick={onColorClicked}>&nbsp;&nbsp;</button>)
         }
-        <p>Narzędzia koralików:</p>
-        {
-            toolBtns.slice(4,8).map(x=><button id={x.tool} key={"btn"+x.tool} onClick={onToolClicked} className={activeTool==x.tool?"activeToolBtn":""}>{x.txt}</button>)
-        }
-        <p>Narzędzia obrazów:</p>
-        {
-            toolBtns.slice(8,11).map(x=><button id={x.tool} key={"btn"+x.tool} onClick={onToolClicked} className={activeTool==x.tool?"activeToolBtn":""}>{x.txt}</button>)
-        }
-        <p>Kolory, wersja tymaczasowa bez palet z bazy:</p>
-        <button disabled={colorIndex<=0} onClick={onColorArrowsClick} id="kolorWstecz">&lt;-</button>
-        {
-            pattern.colors.slice(Math.floor(colorIndex/10)*10,Math.min((Math.floor(colorIndex/10)+1)*10,pattern.colors.length)).map((x)=><button id={x.idInPalettes.toString()} key={x.idInPalettes!.toString()} style={{backgroundColor:x.rgb, border: x.idInPalettes==activeColor.idInPalettes?"2px solid black":"none"}} onClick={onColorClicked}>&nbsp;&nbsp;</button>)
-        }
-        <button disabled={colorIndex>=pattern.colors.length-1} onClick={onColorArrowsClick}>-&gt;</button><br/>
-        Nowy kolor:<select disabled={palettes.length==0} value={activePalette} onChange={onPaletteChanged}>
+        <button className="btn btn-secondary" disabled={colorIndex>=pattern.colors.length-1} onClick={onColorArrowsClick}>&rarr;</button></div>
+        <div className="row"><label htmlFor="colorPicker" className="col-12 col-lg-3">Nowy:</label>
+        <select disabled={palettes.length==0} value={activePalette} onChange={onPaletteChanged} title="wybór palety nowego koloru" className="col-12 col-sm-5 col-lg-4">
         {
             palettes.map((p,i)=><option value={i} key={i}>{p.name}</option>)
         }
-        </select>
-        <select disabled={paletteColors.length==0} value={activePaletteColor} onChange={onPaletteColorChanged}>
+        </select><select disabled={paletteColors.length==0} value={activePaletteColor} onChange={onPaletteColorChanged} id="colorPicker" className="col-12 col-sm-5 col-lg-3" title="wybór nowego koloru" >
         {
             paletteColors.map((p,i)=><option value={i} key={i}>{p.name}</option>)
         }
         </select>
-        <span style={{border:"1px solid black", backgroundColor: activePaletteColor==-1 ? "white":paletteColors[activePaletteColor].rgb}}>&nbsp;&nbsp;&nbsp;&nbsp;</span>
-        <button disabled={palettes.length==0 || paletteColors.length==0} onClick={onNewColorAdded}>Dodaj</button>
-        <p>Obrazy:</p>
-        <p>Dodaj nowy: <input type={"file"} onChange={ReadLoadedFile} ref={fileinputref} accept={".png,.jpg,.jpeg,image/jpeg,image/png"}/> <button onClick={onClickAddFile} disabled={pattern.pictures.length>=3}>Dodaj</button></p>
-        <table>
-            <tbody>
-                {
-                pattern.pictures.map((x,i)=><tr key={i}>
-                    <td>{x.name}</td><td><button id={"pic"+i} onClick={OnClickDeleteFile}>Usuń</button></td>
-                </tr>)
-                }
-            </tbody>
-        </table>
+        <div style={{border:"1px solid black", backgroundColor: activePaletteColor==-1 ? "white":paletteColors[activePaletteColor].rgb}} className="col-12 col-sm-1">&nbsp;</div>
+        <button disabled={palettes.length==0 || paletteColors.length==0} onClick={onNewColorAdded} className="btn btn-secondary col-12 col-lg-4"><BigAddColorIcon/></button>
+        </div>
+        <h3>Obrazy:</h3>
+        <div className="row"><input type={"file"} onChange={ReadLoadedFile} ref={fileinputref} accept={".png,.jpg,.jpeg,image/jpeg,image/png"} className="form-input col-lg-9"/> 
+        <button onClick={onClickAddFile} disabled={pattern.pictures.length>=3} className="btn btn-primary col-lg-2 "><BigAddImgIcon/></button></div>
+        {
+            pattern.pictures.map((x,i)=><div className="row">
+                <span key={i+"name"} className="col-lg-9 col-md-7">{x.name}</span><button id={"pic"+i} onClick={OnClickDeleteFile} className="btn btn-secondary col-lg-2 col-md-4"><BigDeleteImgIcon/></button>
+            </div>)
+        }
         <p className="error">{error??""}</p>
     </div>)
 }

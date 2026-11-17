@@ -11,6 +11,7 @@
       "@components/*": ["./src/components/*"],
       "@interfaces/*": ["./src/interfaces/*"],
       "@services/*": ["./src/services/*"],
+      "@utils/*": ["./src/utils/*"],
       "@shared/*": ["../shared/*"],
     },
 

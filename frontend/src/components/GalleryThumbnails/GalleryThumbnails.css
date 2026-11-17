@@ -1,10 +1,10 @@
 .PatternThumbnail{
-    width: 16%;
     display: inline-block;
     background-color: lavender;
     box-sizing: border-box;
     padding: 1%;
-    margin: 0.7%;
+    margin-right: 2%;
+    margin-left: 2%;
     border-radius: 10px;
     border: 2px solid purple;
 }

@@ -3,6 +3,7 @@ import type {PaletteHeader} from "@interfaces/palette"
 import type { BackendError } from "@interfaces/errors"
 import axios from "axios"
 
+
 export default class EditorPaletteService{
 
     static async GetPalettes(): Promise<PaletteHeader[]|BackendError>{

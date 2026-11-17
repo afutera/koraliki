@@ -63,21 +63,25 @@ const NewImageCreator = ()=>{
     }
 
     return(
-        <form className="NewImageInput" onSubmit={onSubmit}>
-            <label htmlFor="title">Tytuł:</label><input id="title" value={pattern.title} onChange={onChange} required/><span className="error">{errors.title}</span><br/>
-            <label htmlFor="height">Wysokość:</label><input id="height" type='number' min="1" max="256" value={pattern.height} onChange={onChange} required/>
-            <label htmlFor="width">Szerokość:</label><input id="width" type="number" min="1" max="256" value={pattern.width} onChange={onChange} required/><br/>
-            <span className="error">{errors.dimensions}</span>
-            <label htmlFor="unit">w jednostce:</label><select id="unit" value={pattern.unit} onChange={onChange} required>{
+        <form className="NewImageInput container" onSubmit={onSubmit}>
+            <h2>Nowy wzór</h2>
+            <div className="row" >
+            <label htmlFor="title" className="col-2">Tytuł:</label>
+            <input id="title" className="col-10" value={pattern.title} onChange={onChange} required/>
+            <span className="error col-12">{errors.title}</span></div>
+            <div className="row" ><label htmlFor="height" className="col-2">Wysokość:</label><input className="col-4" id="height" type='number' min="1" max="256" value={pattern.height} onChange={onChange} required/>
+            <label htmlFor="width" className="col-2">Szerokość:</label><input className="col-4" id="width" type="number" min="1" max="256" value={pattern.width} onChange={onChange} required/>
+            <span className="error col-12">{errors.dimensions}</span></div>
+            <div className="row"><label htmlFor="unit" className="col-2">w jednostce:</label><select id="unit" className="col-4" value={pattern.unit} onChange={onChange} required>{
                 units.map(x=>(<option key={"JEDN_"+x.key} value={x.key}>{x.label}</option>))
-            }</select><span className="error">{errors.unit}</span><br/>
-            <label htmlFor="palette">Początkowa paleta:</label><select id="palette" value={pattern.palette} onChange={onChange} required>
+            }</select><span className="error col-12">{errors.unit}</span></div>
+            <div className="row" ><label htmlFor="palette" className="col-2">Początkowa paleta:</label><select id="palette" className="col-10" value={pattern.palette} onChange={onChange} required>
             {
                 palettes.map(x=>(<option key={"PAL_"+x._id} value={x._id}>{x.name}</option>))
             }
-            </select><span className="error">{errors.palettes}</span><br/>
-            <input type="submit" value="Stwórz"/><br/>
-            <span className="error">{errors.general}</span>
+            </select><span className="error col-12">{errors.palettes}</span></div>
+            <div className="row justify-content-center" ><input type="submit" value="Stwórz" className="col-2 btn btn-primary"/>
+            <span className="error col-12">{errors.general}</span></div>
         </form>
     )
 }

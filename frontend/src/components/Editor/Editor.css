@@ -1,23 +1,47 @@
 .editor{
     width: 100%;
-    height: 95%;
+    height: 100%;
     display: flex;
 }
 .editPanel{
-    width: 30%;
-    display: inline-block;
+    width: 31%;
+    height: 100%;
     background-color: lavender;
 }
+.editPanel button, .editPanel select{
+    margin: 0.7%;
+}
 .editCanvas{
-    width: 68%;
+    width: 69%;
     height: 100%;
     border: 2px solid black;
     display: inline-block;
+    box-sizing: border-box;
     padding: 0;
+    margin: 0;
 }
 .error{
     color: red;
 }
 .activeToolBtn{
-    background: cornflowerblue
+    background: rgb(161, 90, 243);
+}
+.activeToolBtn:hover{
+    background: rgb(190, 141, 247);
+}
+.NewImageInput{
+    background-color: lavender;
+    width: 100%;
+    margin-top: 2%;
+    padding:5%;
+}
+.NewImageInput h2{
+    text-align: center;
+}
+.NewImageInput .row{
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+.editorIcon{
+    height: 1.5em;
 }

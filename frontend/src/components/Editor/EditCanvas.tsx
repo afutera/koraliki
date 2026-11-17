@@ -25,10 +25,12 @@ onImgMoved: (f: BgPicture, x: number, y: number, scale: number)=>void})=>{
     const [selectedImg, setSelectedImg] = useState<BgPicture|null>(null)
 
     const newSize = ()=>{
+        console.log("resize",containerRef.current?.offsetHeight)
         scaleRef.current=scale.scale
         if (!containerRef.current) return;
         const width = containerRef.current?.offsetWidth-4, height=containerRef.current?.offsetHeight-4;
-        const beadRadius= Math.min((width-rulerwidth)/pattern.width, (height-rulerwidth)/pattern.height)/2*scale.scale;
+        let beadRadius= Math.min((width-rulerwidth)/pattern.width, (height-rulerwidth)/pattern.height)/2*scale.scale;
+        if(beadRadius<0) beadRadius=1
         const hvisible=pattern.width*2*beadRadius+rulerwidth>width, vvisible=pattern.height*2*beadRadius+rulerwidth>height
         var pw=width-rulerwidth, ph=height-rulerwidth
         if(hvisible) ph-=scrollwidth+scrollpadding
@@ -184,11 +186,11 @@ onImgMoved: (f: BgPicture, x: number, y: number, scale: number)=>void})=>{
         <div ref={containerRef} className="editCanvas">
         <Stage x={0} y={0} height={size.height} width={size.width} ref={stageRef} draggable={drag} onDragMove={StageDrag} onDragEnd={StageDragEnd}
         onPointerClick={onClick} onMouseDown={onMouseDown} onTouchStart={onMouseDown} onMouseUp={onMouseUp} onTouchEnd={onMouseUp} onMouseMove={onMouseMove} onTouchMove={onMouseMove} onMouseEnter={onMouseEnter}>
-            <Layer x={rulerwidth-scale.startx*2*size.beadRadius} y={rulerwidth-scale.starty*2*size.beadRadius} scaleX={size.beadRadius*2} scaleY={size.beadRadius*2} opacity={layer=="Beads" ? 0.5:1} listening={layer=="Images"}>
+            <Layer key="imageLayer" x={rulerwidth-scale.startx*2*size.beadRadius} y={rulerwidth-scale.starty*2*size.beadRadius} scaleX={size.beadRadius*2} scaleY={size.beadRadius*2} opacity={layer=="Beads" ? 0.5:1} listening={layer=="Images"}>
                 {pattern.pictures.map((img,i)=><ArrayImage key={img.name+i} img={img} draggable={imgDrag} getRef={x=>{imgRefs.current.set(img,x)}} setXYScale={onImgDrag} whenClicked={onImgClick}/>)}
                 {imgScale && <Transformer rotateEnabled={false} keepRatio={true} flipEnabled={false} ref={transformer}/>}
             </Layer>
-            <Layer x={rulerwidth-scale.startx*2*size.beadRadius} y={rulerwidth-scale.starty*2*size.beadRadius} listening={false} opacity={layer=="Beads" ? 1:0.5}>
+            <Layer key="beadLayer" x={rulerwidth-scale.startx*2*size.beadRadius} y={rulerwidth-scale.starty*2*size.beadRadius} listening={false} opacity={layer=="Beads" ? 1:0.5}>
                 {
                     size.beadRadius<=2 ? [...pattern.beads].map(([coords,color],k)=>
                     <Rect key={k} y={Math.floor(coords/pattern.width)*size.beadRadius*2+size.beadRadius} x={(coords%pattern.width)*size.beadRadius*2+size.beadRadius} height={size.beadRadius*2} width={size.beadRadius*2}
@@ -198,7 +200,7 @@ onImgMoved: (f: BgPicture, x: number, y: number, scale: number)=>void})=>{
                   fill={pattern.colors.find(x=>x.index==color)?.rgb} strokeWidth={pattern.colors.find(x=>x.index==color)?.needsBorder ? 1:0} stroke={"black"}/>)
                 }
             </Layer>
-            <Layer listening={false}>
+            <Layer key="borderLayer" listening={false}>
                 <Rect x={0} y={0} height={rulerwidth} width={size.width} fill="#a0a0a0"/>
                 <Rect x={0} y={0} width={rulerwidth} height={size.height} fill="#a0a0a0"/>
                 <Rect x={(pattern.width)*2*size.beadRadius+rulerwidth-scale.startx*2*size.beadRadius} y={0} height={size.height} width={size.width-(pattern.width-scale.startx)*2*size.beadRadius-rulerwidth} fill="#a0a0a0"/>
@@ -219,7 +221,7 @@ onImgMoved: (f: BgPicture, x: number, y: number, scale: number)=>void})=>{
                     </>)
                 }
             </Layer>
-            {!drag && <Layer _useStrictMode> 
+            {!drag && <Layer _useStrictMode key="scrollbarLayer"> 
                 {scrollbar.hvisible && <Rect id={"hScrollbar"} x={scrollbar.hpos} y={size.height-scrollpadding-scrollwidth} height={scrollwidth} width={scrollbar.hlen} fill={"#00000080"} 
                 draggable onDragMove={OnHScrollbarMove} dragBoundFunc={(pos)=>({x: Math.max(Math.min(pos.x,size.width-scrollpadding-scrollwidth-scrollbar.hlen),scrollpadding), y:size.height-scrollpadding-scrollwidth})}/>}
                 {scrollbar.vvisible && <Rect id={"vScrollbar"} y={scrollbar.vpos} x={size.width-scrollpadding-scrollwidth} height={scrollbar.vlen} width={scrollwidth} fill={"#00000080"} 

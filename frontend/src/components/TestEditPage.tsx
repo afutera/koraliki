@@ -34,12 +34,11 @@ const EditPage = ()=>{
     },[])
 
     return(<>
-           <header>Test edytora</header>
            {pattern===null? 
             <div><h2>Błąd przy pobieraniu wzoru</h2>
             <p>Szczegóły: {error}</p>
             <button onClick={loadPattern}>Spróbuj ponownie</button>
-            </div>:<div style={{height: innerHeight}}><Editor pattern={pattern} reload={loadPattern}></Editor></div>}
+            </div>:<Editor pattern={pattern} reload={loadPattern}/>}
     </>)
 }
 
