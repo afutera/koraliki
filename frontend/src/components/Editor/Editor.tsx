@@ -2,13 +2,18 @@ import EditCanvas from "./EditCanvas"
 import "./Editor.css"
 import type {BgPicture, Pattern, ShortColor} from "@interfaces/pattern"
 import EditPanel from "./EditPanel.tsx"
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { type EditorLayers, type EditorTools } from "@interfaces/enums.ts"
 import {imageDimensionsFromStream} from 'image-dimensions';
 import EditorPatternService from "@services/EditorPatternService.ts"
 import { isBackendError } from "@interfaces/errors.ts"
+import { useBlocker } from "react-router-dom"
+import Modal, {type ModalArgs, ModalControl} from "@components/Modal.tsx"
 
 const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
+    const EMPTYMODAL={id:"modal",text:"",title:"W toku...",onConfirm: ()=>{}, onClose: ()=>{}}
+    const DIRTYMODAL={id:"modal",text:"Masz niezapisane zmiany. Wyjście spowoduje ich utracenie.",title:"Czy na pewno wyjść?"}
+
     const [_pattern, setPattern] = useState(pattern)
     const [currentColor, setCurrentColor] = useState(pattern.colors[0])
     const [currentTool, setCurrentTool] = useState<EditorTools>("Drag")
@@ -17,13 +22,30 @@ const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
     const [scale, setScale] = useState({startx: 0, starty:0, scale: 1})
     const unsavedFiles= useRef(new Map<string,File>())
     const [layer,setLayer] = useState<EditorLayers>("Beads")
+    const [isUnsaved,setUnsaved] = useState<boolean>(false)
+    const [modal,setModal] = useState<ModalArgs>(EMPTYMODAL)
+    const modalToggle=useRef<null|ModalControl>(null)
+
+    const blocker = useBlocker(
+        useCallback(()=>isUnsaved,[isUnsaved])
+    );
+    useEffect(()=>{
+        if(blocker.state=="blocked") ShowModal({...DIRTYMODAL, onConfirm: ()=>{blocker.proceed();}, onClose: ()=>{blocker.reset();}})
+    },[blocker.state])
+    useEffect(()=>{
+        const beforeunload= (e:Event)=>{e.preventDefault(); return DIRTYMODAL.title+" "+DIRTYMODAL.text}
+        if(isUnsaved) window.addEventListener("beforeunload",beforeunload)
+        return ()=>{window.removeEventListener("beforeunload",beforeunload)}
+    },[isUnsaved])
 
     const PlaceNewBead = (a: number) =>{
         _pattern.beads.set(a,currentColor.index)
+        setUnsaved(true)
         setPattern({..._pattern}) //odswiez obiekt
     }
     const EraseBead = (a: number) =>{
         _pattern.beads.delete(a)
+        setUnsaved(true)
         setPattern({..._pattern}) //odswiez obiekt
     }
     const DrawLine = (from: number, to: number)=>{
@@ -63,12 +85,14 @@ const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
         coords.forEach((c)=>{
             beads.set(c,currentColor.index)
         })
+        setUnsaved(true)
         setPattern({..._pattern, beads})
     }
     const Fill = (a: number) =>{
         var current= _pattern.beads.get(a)
         if(current===undefined) current=-1
         FillRecursive(a,_pattern.beads, current,a,a)
+        setUnsaved(true)
         setPattern({..._pattern})
     }   
     const FillRecursive = (a: number, beads: Map<number,number>, bgcolor: number, prevstart: number, prevend: number) =>{
@@ -130,6 +154,7 @@ const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
             url
         })
         unsavedFiles.current.set(url,f)
+        setUnsaved(true)
         setPattern({..._pattern})
     }
     const DeletePicture = (f: BgPicture)=>{
@@ -139,12 +164,14 @@ const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
             }
         }
         _pattern.pictures.splice(_pattern.pictures.indexOf(f),1)
+        setUnsaved(true)
         setPattern({..._pattern})
     }
     const ImgMoved = (f: BgPicture, x: number, y: number, scale: number) =>{
         f.x=x;
         f.y=y;
         f.scale=scale;
+        setUnsaved(true)
         setPattern({...pattern})
     }
     const onSave = async ()=>{
@@ -152,6 +179,7 @@ const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
         const res=await EditorPatternService.SavePattern(_pattern,unsavedFiles.current);
         if(res===true){
             unsavedFiles.current.clear()
+            setUnsaved(false)
             reload()
             return undefined
         }
@@ -206,8 +234,16 @@ const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
         return undefined
     }
 
+    const SETPUBLICMODAL={id: "", text: "Czy na pewno chcesz, aby inni użytkownicy widzieli ten wzór?", title:"Publikacja wzoru", onClose:EMPTYMODAL.onClose, 
+        onConfirm: ()=>{setPattern({..._pattern, isPublic: true})}
+    }
     const onPublic = (c:boolean)=>{
-        setPattern({..._pattern, isPublic: c})
+        ShowModal
+        if(c===true){
+            ShowModal(SETPUBLICMODAL);
+            //if(window.confirm("Czy na pewno chcesz, aby inni użytkownicy widzieli ten wzór?")===false) return
+        }
+        else setPattern({..._pattern, isPublic: false})
     }
 
     const onMouseUpDown = (down: boolean, bead: number)=>{
@@ -236,14 +272,22 @@ const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
         setLayer(l)
     }
 
-    return(
+    const ShowModal=(args: ModalArgs)=>{
+        const id="editmodal"
+        args.id=id;
+        setModal(args);
+        modalToggle.current?.show()
+    }
+
+    return(<>
+        <Modal id="editmodal" onConfirm={()=>{modalToggle.current?.forceClose(); modal.onConfirm(); setModal(EMPTYMODAL)}} onClose={()=>{modal.onClose(); setModal(EMPTYMODAL)}} title={modal.title} text={modal.text} getToggle={(x)=>{modalToggle.current=x}}/>
         <div className="editor">
             <EditPanel pattern={_pattern} activeColor={currentColor} activeTool={currentTool} activeLayer={layer}
             onChangeLayer={onChangeLayer} onAddPicture={AddPicture} onDeletePicture={DeletePicture} onSaveBtnClicked={onSave}
             onColorChange={onColorChange} onToolChange={onToolChange} onNewColor={onColorAdded} onRename={onRename} onSetPublic={onPublic}/>
             <EditCanvas pattern={_pattern} layer={layer} onClickBeadLayer={onClickBead} onMouseUpDown={onMouseUpDown} scale={scale} drag={currentTool=="Drag"} imgDrag={currentTool=="ImgDrag"} imgScale={currentTool=="ImgScale"}
             onScroll={SetNewStartPoint} onImgMoved={ImgMoved}/>
-        </div>
+        </div></>
     )
 }
 

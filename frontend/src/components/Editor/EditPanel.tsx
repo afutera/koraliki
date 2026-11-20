@@ -125,9 +125,6 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
     const onPublicChanged=(e:ChangeEvent<HTMLInputElement>)=>{
         //e.preventDefault(); //Problemy z rerenderowaniem po zmianie stanu
         const c=e.currentTarget.checked
-        if(e.currentTarget.checked===true){
-            if(window.confirm("Czy na pewno chcesz, aby inni użytkownicy widzieli ten wzór?")===false) return
-        }
         onSetPublic(c)
     }
     const ReadLoadedFile=(e: ChangeEvent<HTMLInputElement>)=>{

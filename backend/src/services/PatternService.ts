@@ -104,7 +104,7 @@ class PatternService{
         })
         let withcolordata: {index:number,count:number, rgb: string, desc:string}[] = []
         for(let col of result.colors){
-            let info=await this.helpPaletteService?.getColorDataWithPalette(col.id)
+            let info=await this.helpPaletteService?.getColorDataWithPalette(col.idInPalettes)
             withcolordata.push({index: col.index, count:colorStats.get(col.index)??0, rgb: col.rgb, desc: info===undefined ? col.name:(info.name+" - "+info.colors.name)})
         }
         return {pattern: result, colorStats: withcolordata}

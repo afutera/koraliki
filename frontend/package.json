@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@popperjs/core": "^2.11.8",
     "axios": "^1.20.0",
+    "bootstrap": "^5.3.9",
     "image-dimensions": "^2.6.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -23,6 +25,7 @@
     "@eslint/js": "^10.0.1",
     "@rolldown/plugin-babel": "^0.2.3",
     "@types/babel__core": "^7.20.5",
+    "@types/bootstrap": "^5.2.11",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
