@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import GalleryPatternService, {type GalleryResponse} from "../services/GalleryPatternsService"
 import MyPatternThumbnail from "./GalleryThumbnails/MyPatternThumbnail"
 import { isBackendError } from "@interfaces/errors"
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router"
 
 
 const ProfileGallery = ()=>{

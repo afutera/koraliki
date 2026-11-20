@@ -6,7 +6,7 @@ import EditorPaletteService from "@services/EditorPaletteService"
 import { isBackendError } from "@interfaces/errors"
 import "./Editor.css"
 import EditorPatternService from "@services/EditorPatternService"
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router"
 
 const NewImageCreator = ()=>{
     const [pattern, setPattern] = useState<AddPatternRequest>({title:"Nowy",height:1,width:1,unit:SizeUnits.STANDARD_BOARD,palette:""})

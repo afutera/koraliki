@@ -7,7 +7,7 @@ import { type EditorLayers, type EditorTools } from "@interfaces/enums.ts"
 import {imageDimensionsFromStream} from 'image-dimensions';
 import EditorPatternService from "@services/EditorPatternService.ts"
 import { isBackendError } from "@interfaces/errors.ts"
-import { useBlocker } from "react-router-dom"
+import { useBlocker } from "react-router"
 import Modal, {type ModalArgs, ModalControl} from "@components/Modal.tsx"
 
 const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{

@@ -3,7 +3,7 @@ import { type Pattern } from "@interfaces/pattern"
 import { useEffect, useState } from "react"
 import EditorPatternService from "../services/EditorPatternService"
 import { isBackendError } from "@interfaces/errors"
-import { useParams } from "react-router-dom"
+import { useParams } from "react-router"
 
 const EditPage = ()=>{
     const params=useParams()
