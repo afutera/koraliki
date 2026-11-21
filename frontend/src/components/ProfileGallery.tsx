@@ -1,44 +1,44 @@
-import { useState, useEffect } from "react"
+import {useState} from "react"
 import GalleryPatternService, {type GalleryResponse} from "../services/GalleryPatternsService"
 import MyPatternThumbnail from "./GalleryThumbnails/MyPatternThumbnail"
-import { isBackendError } from "@interfaces/errors"
-import { useNavigate } from "react-router"
+import {isBackendError } from "@interfaces/errors"
+import {useNavigate} from "react-router"
+import {useLoaderData} from "react-router"
 
+type GalleryState = {isSuccess: boolean,results: GalleryResponse, error: string}
 
-const ProfileGallery = ()=>{
-
-    const [results, setResults] = useState<GalleryResponse>({pageCount: 0, pageNo: 1, results: []})
-    const [error, setError] = useState<string>("")
-    const nav = useNavigate();
-
-    const load=async ()=>{
+export const LoadProfileGallery=async (): Promise<GalleryState>=>{
         const r=await GalleryPatternService.MOCK_GetAllMyPatterns()
         if(isBackendError(r)) {
-            setError(`Błąd ${r.statusCode} - ${r.message}`)
-            setResults({pageCount: 0, pageNo: 1, results: []})
+            return {isSuccess: false, results: {pageCount: 0, pageNo: 1, results: []}, error: `Błąd ${r.statusCode} - ${r.message}`}
         }
         else{
-            setError("")
-            setResults(r)
+            return {isSuccess: true, error: "", results: r}
         }
     }
 
-    useEffect(()=>{
-        load()
-    },[])
+export const ProfileGallery = ()=>{
+    const loaded = useLoaderData<typeof LoadProfileGallery>()
+    const [error, setError] = useState<string>(loaded.error)
+    const [results, setResults] = useState(loaded.results)
+    const nav = useNavigate();
+
+    const setState = (x:GalleryState)=>{
+        setResults(x.results); setError(x.error)
+    }
 
     const onDelete=(id: string)=>{
         if(!window.confirm("Czy na pewno chcesz nieodwracalnie usunąć wzór?")) return
         GalleryPatternService.DeletePattern(id).then(x=>{
-            if(isBackendError(x)) setError(`Błąd kopiowania ${x.statusCode} - ${x.message}`)
-            else load()
+            if(isBackendError(x)) setError(`Błąd usuwania ${x.statusCode} - ${x.message}`)
+            else LoadProfileGallery().then(y=>{setState(y)})
         })
     }
 
     const onCopy=(id: string)=>{
         GalleryPatternService.CopyPattern(id).then(x=>{
             if(isBackendError(x)) setError(`Błąd kopiowania ${x.statusCode} - ${x.message}`)
-            else load()
+            else LoadProfileGallery().then(y=>{setState(y)})
         })
     }
 
@@ -57,5 +57,3 @@ const ProfileGallery = ()=>{
         <p>{error}</p>
     </div>)
 }
-
-export default ProfileGallery

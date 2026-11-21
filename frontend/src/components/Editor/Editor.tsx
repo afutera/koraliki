@@ -9,6 +9,7 @@ import EditorPatternService from "@services/EditorPatternService.ts"
 import { isBackendError } from "@interfaces/errors.ts"
 import { useBlocker } from "react-router"
 import Modal, {type ModalArgs, ModalControl} from "@components/Modal.tsx"
+import { type OperationProgress } from "@interfaces/enums.ts"
 
 const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
     const EMPTYMODAL={id:"modal",text:"",title:"W toku...",onConfirm: ()=>{}, onClose: ()=>{}}
@@ -22,30 +23,32 @@ const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
     const [scale, setScale] = useState({startx: 0, starty:0, scale: 1})
     const unsavedFiles= useRef(new Map<string,File>())
     const [layer,setLayer] = useState<EditorLayers>("Beads")
-    const [isUnsaved,setUnsaved] = useState<boolean>(false)
+    const [saveProgress,setSaveProgress] = useState<OperationProgress>("Done")
     const [modal,setModal] = useState<ModalArgs>(EMPTYMODAL)
     const modalToggle=useRef<null|ModalControl>(null)
 
+    const isUnsaved=():boolean=>{return saveProgress!=="Done"}
+
     const blocker = useBlocker(
-        useCallback(()=>isUnsaved,[isUnsaved])
+        useCallback(isUnsaved,[saveProgress])
     );
     useEffect(()=>{
         if(blocker.state=="blocked") ShowModal({...DIRTYMODAL, onConfirm: ()=>{blocker.proceed();}, onClose: ()=>{blocker.reset();}})
     },[blocker.state])
     useEffect(()=>{
         const beforeunload= (e:Event)=>{e.preventDefault(); return DIRTYMODAL.title+" "+DIRTYMODAL.text}
-        if(isUnsaved) window.addEventListener("beforeunload",beforeunload)
+        if(isUnsaved()) window.addEventListener("beforeunload",beforeunload)
         return ()=>{window.removeEventListener("beforeunload",beforeunload)}
-    },[isUnsaved])
+    },[saveProgress])
 
     const PlaceNewBead = (a: number) =>{
         _pattern.beads.set(a,currentColor.index)
-        setUnsaved(true)
+        setSaveProgress("NotStarted")
         setPattern({..._pattern}) //odswiez obiekt
     }
     const EraseBead = (a: number) =>{
         _pattern.beads.delete(a)
-        setUnsaved(true)
+        setSaveProgress("NotStarted")
         setPattern({..._pattern}) //odswiez obiekt
     }
     const DrawLine = (from: number, to: number)=>{
@@ -85,14 +88,14 @@ const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
         coords.forEach((c)=>{
             beads.set(c,currentColor.index)
         })
-        setUnsaved(true)
+        setSaveProgress("NotStarted")
         setPattern({..._pattern, beads})
     }
     const Fill = (a: number) =>{
         var current= _pattern.beads.get(a)
         if(current===undefined) current=-1
         FillRecursive(a,_pattern.beads, current,a,a)
-        setUnsaved(true)
+        setSaveProgress("NotStarted")
         setPattern({..._pattern})
     }   
     const FillRecursive = (a: number, beads: Map<number,number>, bgcolor: number, prevstart: number, prevend: number) =>{
@@ -154,7 +157,7 @@ const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
             url
         })
         unsavedFiles.current.set(url,f)
-        setUnsaved(true)
+        setSaveProgress("NotStarted")
         setPattern({..._pattern})
     }
     const DeletePicture = (f: BgPicture)=>{
@@ -164,22 +167,22 @@ const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
             }
         }
         _pattern.pictures.splice(_pattern.pictures.indexOf(f),1)
-        setUnsaved(true)
+        setSaveProgress("NotStarted")
         setPattern({..._pattern})
     }
     const ImgMoved = (f: BgPicture, x: number, y: number, scale: number) =>{
         f.x=x;
         f.y=y;
         f.scale=scale;
-        setUnsaved(true)
+        setSaveProgress("NotStarted")
         setPattern({...pattern})
     }
     const onSave = async ()=>{
-        console.log("Zapisuję wzór:",_pattern)
+        setSaveProgress("InProgress")
         const res=await EditorPatternService.SavePattern(_pattern,unsavedFiles.current);
         if(res===true){
             unsavedFiles.current.clear()
-            setUnsaved(false)
+            setSaveProgress("Done")
             reload()
             return undefined
         }
@@ -284,11 +287,10 @@ const Editor = ({pattern, reload}:{pattern: Pattern, reload: ()=>void})=>{
         <div className="editor">
             <EditPanel pattern={_pattern} activeColor={currentColor} activeTool={currentTool} activeLayer={layer}
             onChangeLayer={onChangeLayer} onAddPicture={AddPicture} onDeletePicture={DeletePicture} onSaveBtnClicked={onSave}
-            onColorChange={onColorChange} onToolChange={onToolChange} onNewColor={onColorAdded} onRename={onRename} onSetPublic={onPublic}/>
+            onColorChange={onColorChange} onToolChange={onToolChange} onNewColor={onColorAdded} onRename={onRename} onSetPublic={onPublic} saveStatus={saveProgress=="Done"?"Zapisano":(saveProgress=="InProgress"?"Zapisywanie...":"Niezapisane zmiany")}/>
             <EditCanvas pattern={_pattern} layer={layer} onClickBeadLayer={onClickBead} onMouseUpDown={onMouseUpDown} scale={scale} drag={currentTool=="Drag"} imgDrag={currentTool=="ImgDrag"} imgScale={currentTool=="ImgScale"}
             onScroll={SetNewStartPoint} onImgMoved={ImgMoved}/>
         </div></>
     )
 }
-
 export default Editor

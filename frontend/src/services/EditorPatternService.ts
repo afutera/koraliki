@@ -39,8 +39,8 @@ export default class EditorPatternService{
         if(pattern.title.length<=0||pattern.title.length>30) return new Error("Tytuł powinien mieć od 1 do 30 znaków")
         if(pattern.pictures.length>3) return new Error("Obszar roboczy może zawierać do 3 obrazów")
         let sendbeads: {[key:string]:number}={}
-        var errstring=""
-        const beadarray=[...pattern.beads].forEach(([k,v])=>{
+        let errstring="";
+        [...pattern.beads].forEach(([k,v])=>{
             if(pattern.colors.findIndex(x=>x.index==v)===-1) errstring=`Wzór zawiera koralik w nieistniejącym kolorze na współrzędnych (${k%pattern.width},${Math.floor(k/pattern.width)}). Użyj gumki na tym obszarze.`
             sendbeads[k.toString()]=v
         })

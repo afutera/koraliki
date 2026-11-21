@@ -1,16 +1,18 @@
 import type { ShortColor, BgPicture, Pattern } from "@interfaces/pattern"
-import type { PaletteHeader } from "@interfaces/palette"
 import { type EditorTools, isEditorTool, type EditorLayers } from "@interfaces/enums"
-import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent } from "react"
+import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent,  } from "react"
+import { useLoaderData } from "react-router"
 import { isBackendError } from "@interfaces/errors"
 import EditorPaletteService from "@services/EditorPaletteService"
 import {LayerTypeIcon, LayerIcon, ToolTypeIcon, BigDeleteImgIcon, BigAddImgIcon, BigAddColorIcon } from "@components/Editor/Icons"
+import { type LoaderDataWithPicker,PaletteColorsLoader} from "./EditorPaletteLoaders"
 
 interface EditPanelProps{
     pattern: Pattern,
     activeColor: ShortColor,
     activeTool: EditorTools,
     activeLayer: EditorLayers,
+    saveStatus: string
     onColorChange: (color: ShortColor)=>void, 
     onToolChange: (tool: EditorTools)=>void,
     onNewColor: (color: ShortColor) =>void,
@@ -24,53 +26,17 @@ interface EditPanelProps{
 
 const toolBtns: EditorTools[] = ["Drag","ZoomIn","ZoomOut","Save","Pencil","Line","Fill","Erase","ImgDrag","ImgScale","ImgDelete"]
 
-const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange, onToolChange, onNewColor, onRename, onSetPublic, onAddPicture, onDeletePicture, onChangeLayer, onSaveBtnClicked}:EditPanelProps) =>{
+const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange, onToolChange, onNewColor, onRename, onSetPublic, onAddPicture, onDeletePicture, onChangeLayer, onSaveBtnClicked, saveStatus}:EditPanelProps) =>{
+
+    const {colorpicker} = useLoaderData<LoaderDataWithPicker>()
 
     const colorIndex = Math.max(pattern.colors.findIndex(x=>x.index==activeColor.index),0)
-    const [palettes, setPalettes] = useState<Array<PaletteHeader>>([])
-    const [activePalette, setActivePalette] = useState<number>(-1)
-    const [paletteColors, setPaletteColors] = useState<Array<ShortColor>>([])
-    const [activePaletteColor, setActivePaletteColor] = useState<number>(-1)
-    const [error, setError] = useState<string|null>(null)
+    const [activePalette, setActivePalette] = useState(colorpicker.palettes.length>0? 0:-1)
+    const [paletteColors, setPaletteColors] = useState(colorpicker.colors)
+    const [activePaletteColor, setActivePaletteColor] = useState(colorpicker.isSuccess? 0:-1)
+    const [error, setError] = useState(colorpicker.error)
     const [file, setFile] = useState<File|null>(null)
     const fileinputref=useRef<HTMLInputElement>(null)
-
-    useEffect(()=>{
-        async function getData(){
-            var p=await EditorPaletteService.GetPalettes();
-            if(isBackendError(p)){
-                setError(p.message)
-                setPalettes([])
-                setActivePalette(-1)
-            }else{
-                setError(null)
-                setPalettes(p)
-                setActivePalette(0)
-            }
-        }
-        getData()
-    },[])
-    useEffect(()=>{
-        async function GetColor(){
-            if(activePalette===-1||palettes.length<=activePalette){
-            setError("Brak palety")
-            setPaletteColors([])
-            setActivePaletteColor(-1)
-            return
-            }
-            var p= await EditorPaletteService.GetColorsFromPalette(palettes[activePalette]._id!);
-            if(isBackendError(p)){
-                setError(p.message)
-                setPaletteColors([])
-                setActivePaletteColor(-1)
-            }else{
-                setError(null)
-                setPaletteColors(p)
-                setActivePaletteColor(0)
-            }
-        }
-        GetColor();
-    },[activePalette])
 
     const onColorArrowsClick = (e:MouseEvent<HTMLButtonElement>)=>{
         e.preventDefault();
@@ -100,10 +66,20 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
         if(res===undefined) setError("")
         else setError(res.message)
     }
-    const onPaletteChanged = (e:ChangeEvent<HTMLSelectElement>) =>{
+    const onPaletteChanged = async (e:ChangeEvent<HTMLSelectElement>) =>{
         e.preventDefault();
         const ind=parseInt(e.currentTarget.value)
         setActivePalette(ind)
+        if(ind===-1||colorpicker.palettes.length<=ind){
+            setError("Brak palety")
+            setPaletteColors([])
+            setActivePaletteColor(-1)
+        }else{
+            const p = await PaletteColorsLoader(colorpicker.palettes[ind]._id!);
+            setError(p.error)
+            setPaletteColors(p.colors)
+            setActivePaletteColor(p.colors.length>0? 0:-1)
+        }
     }
     const onPaletteColorChanged = (e:ChangeEvent<HTMLSelectElement>) =>{
         e.preventDefault();
@@ -164,6 +140,7 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
         <div className="row"><label className="col-12 col-md-3" htmlFor="title">Tytuł:</label><input type="text" value={pattern.title} onChange={onNameChanged} id="title" className="col-11 col-md-8 form-input"/></div>
         <div className="row"><label className="col-9 col-md-3" htmlFor="isPublic">Publiczny:</label><div className="form-check form-switch col-3" style={{paddingLeft:0}}>
         <input type="checkbox" checked={pattern.isPublic} onChange={onPublicChanged} className="form-check-input" id="isPublic" style={{marginLeft:"2px"}}/></div></div>
+        <div className="row"><label className="col-12 col-md-3">Stan:</label><div className="col-11 col-md-8">{saveStatus}</div></div>
         <h3>Narzędzia:</h3>
         <div className="row">
         <div>{
@@ -182,9 +159,9 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
         }
         <button className="btn btn-secondary" disabled={colorIndex>=pattern.colors.length-1} onClick={onColorArrowsClick}>&rarr;</button></div>
         <div className="row"><label htmlFor="colorPicker" className="col-12 col-lg-3">Nowy:</label>
-        <select disabled={palettes.length==0} value={activePalette} onChange={onPaletteChanged} title="wybór palety nowego koloru" className="col-12 col-sm-5 col-lg-4">
+        <select disabled={colorpicker.palettes.length==0} value={activePalette} onChange={onPaletteChanged} title="wybór palety nowego koloru" className="col-12 col-sm-5 col-lg-4">
         {
-            palettes.map((p,i)=><option value={i} key={i}>{p.name}</option>)
+            colorpicker.palettes.map((p,i)=><option value={i} key={i}>{p.name}</option>)
         }
         </select><select disabled={paletteColors.length==0} value={activePaletteColor} onChange={onPaletteColorChanged} id="colorPicker" className="col-12 col-sm-5 col-lg-3" title="wybór nowego koloru" >
         {
@@ -192,7 +169,7 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
         }
         </select>
         <div style={{border:"1px solid black", backgroundColor: activePaletteColor==-1 ? "white":paletteColors[activePaletteColor].rgb}} className="col-12 col-sm-1">&nbsp;</div>
-        <button disabled={palettes.length==0 || paletteColors.length==0} onClick={onNewColorAdded} className="btn btn-secondary col-12 col-lg-4"><BigAddColorIcon/></button>
+        <button disabled={colorpicker.palettes.length==0 || paletteColors.length==0} onClick={onNewColorAdded} className="btn btn-secondary col-12 col-lg-4"><BigAddColorIcon/></button>
         </div>
         <h3>Obrazy:</h3>
         <div className="row"><input type={"file"} onChange={ReadLoadedFile} ref={fileinputref} accept={".png,.jpg,.jpeg,image/jpeg,image/png"} className="form-input col-lg-9"/> 
@@ -202,7 +179,7 @@ const EditPanel = ({pattern, activeColor, activeTool, activeLayer, onColorChange
                 <span key={i+"name"} className="col-lg-9 col-md-7">{x.name}</span><button id={"pic"+i} onClick={OnClickDeleteFile} className="btn btn-secondary col-lg-2 col-md-4"><BigDeleteImgIcon/></button>
             </div>)
         }
-        <p className="error">{error??""}</p>
+        <p className="error">{error}</p>
     </div>)
 }
 

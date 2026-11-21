@@ -6,4 +6,6 @@ function isEditorTool(x: any): x is EditorTools {
 
 type EditorLayers = "Beads" | "Images"
 
-export {type EditorTools, type EditorLayers, isEditorTool}
+type OperationProgress = "NotStarted"|"InProgress"|"Done"
+
+export {type EditorTools, type EditorLayers, isEditorTool, type OperationProgress}

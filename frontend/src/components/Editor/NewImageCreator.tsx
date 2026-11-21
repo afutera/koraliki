@@ -1,30 +1,20 @@
-import { useEffect, useState,type ChangeEvent, type SubmitEvent } from "react"
+import {useState,type ChangeEvent, type SubmitEvent } from "react"
 import {type AddPatternRequest} from "@shared/interfaces/pattern"
 import {SizeUnits, GetAllUnits, GetLabel, UnitExists} from "@shared/interfaces/patternsizeunits"
-import { type PaletteHeader } from "@interfaces/palette"
-import EditorPaletteService from "@services/EditorPaletteService"
 import { isBackendError } from "@interfaces/errors"
 import "./Editor.css"
 import EditorPatternService from "@services/EditorPatternService"
-import { useNavigate } from "react-router"
+import { useLoaderData, useNavigate } from "react-router"
+import {type PaletteHeaderLoaderData} from "./EditorPaletteLoaders"
 
-const NewImageCreator = ()=>{
-    const [pattern, setPattern] = useState<AddPatternRequest>({title:"Nowy",height:1,width:1,unit:SizeUnits.STANDARD_BOARD,palette:""})
+//loader: PaletteLoader z ./EditorPaletteLoaders.ts
+
+export const NewImageCreator = ()=>{
+    const {palettes, error} = useLoaderData<PaletteHeaderLoaderData>()
+    const [pattern, setPattern] = useState<AddPatternRequest>({title:"Nowy",height:1,width:1,unit:SizeUnits.STANDARD_BOARD,palette: palettes.length>0 ? palettes[0]._id??"":""})
     const units = GetAllUnits().map(x=>({key: x, label:GetLabel(x)}))
-    const [palettes, setPalettes] = useState<PaletteHeader[]>([])
-    const [errors, setErrors] = useState({title:"",dimensions:"",unit:"",palettes:"", general:""})
+    const [errors, setErrors] = useState({title:"",dimensions:"",unit:"",palettes:error, general:""})
     const nav=useNavigate()
-
-    useEffect(()=>{
-        EditorPaletteService.GetPalettes().then(pal=>{
-            if(isBackendError(pal)) setErrors({...errors, palettes:pal.message})
-            else{
-                setErrors({...errors, palettes:""})
-                setPalettes(pal)
-                if(pal.length>0) setPattern({...pattern,palette:pal[0]._id??""})
-            }
-        })
-    },[])
 
     const onChange=(e:ChangeEvent<HTMLInputElement|HTMLSelectElement>)=>{
         e.preventDefault()
@@ -85,5 +75,3 @@ const NewImageCreator = ()=>{
         </form>
     )
 }
-
-export default NewImageCreator
