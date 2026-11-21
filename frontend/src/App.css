@@ -41,9 +41,15 @@ nav li{
   margin: auto;
   text-align: center;
 }
-h3{
+h3, h2{
   color: rgb(66, 0, 128);
 }
 label{
   alignment-baseline: middle;
+}
+.errorBox{
+  background-color: lavender;
+  padding: 1%;
+  margin:1%;
+  text-align: center;
 }

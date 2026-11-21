@@ -38,10 +38,10 @@ export const EditPage = ()=>{
     }
 
     return(<>
-           {pattern===null? 
-            <div><h2>Błąd przy pobieraniu wzoru</h2>
-            <p>Szczegóły: {error}</p>
-            <button onClick={loadPattern}>Spróbuj ponownie</button>
-            </div>:<Editor pattern={pattern} reload={loadPattern}/>}
+        {pattern===null? 
+        <div className="errorBox"><h2>Błąd przy pobieraniu wzoru</h2>
+        <p>Szczegóły: {error}</p>
+        <button onClick={loadPattern} className="btn btn-primary">Spróbuj ponownie</button>
+        </div>:<Editor pattern={pattern} reload={loadPattern}/>}
     </>)
 }
