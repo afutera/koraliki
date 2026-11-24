@@ -1,4 +1,4 @@
-import {type SharedPatternColor, type SharedImage, type SharedEditPattern, type SharedGalleryPattern} 
+import {type SharedPatternColor, type SharedImage, type SharedEditPattern, type SharedGalleryPattern, type SharedPatternWithBeadCount} 
 from '@shared/interfaces/pattern'
 
 interface ShortColor extends SharedPatternColor<string> {}
@@ -13,4 +13,6 @@ interface Pattern extends SharedEditPattern<string,number,ShortColor,BgPicture> 
 //reprezentuje wzor tylko do galerii, bez obrazow, ale z nazwa uzytkownika i srednia ocena
 interface ShortPattern extends SharedGalleryPattern<string, number, ShortColor> {}
 
-export type {Pattern, ShortColor, BgPicture, BgPictureApi, ShortPattern};
+interface PatternWithBeadCount extends SharedPatternWithBeadCount<ShortPattern>{}
+
+export type {Pattern, ShortColor, BgPicture, BgPictureApi, ShortPattern, PatternWithBeadCount};

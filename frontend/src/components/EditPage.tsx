@@ -5,6 +5,7 @@ import EditorPatternService from "../services/EditorPatternService"
 import { isBackendError } from "@interfaces/errors"
 import { useLoaderData, useParams, type LoaderFunctionArgs } from "react-router"
 import { ColorPickerLoader, type LoaderDataWithPicker } from "./Editor/EditorPaletteLoaders"
+import ErrorScreen from "@components/ErrorScreen"
 
 type PatternLoaderData={isSuccess:boolean, error:string, pattern:Pattern|null}
 const extLoadPattern=async(id:string|undefined):Promise<PatternLoaderData>=>{
@@ -38,10 +39,6 @@ export const EditPage = ()=>{
     }
 
     return(<>
-        {pattern===null? 
-        <div className="errorBox"><h2>Błąd przy pobieraniu wzoru</h2>
-        <p>Szczegóły: {error}</p>
-        <button onClick={loadPattern} className="btn btn-primary">Spróbuj ponownie</button>
-        </div>:<Editor pattern={pattern} reload={loadPattern}/>}
+        {pattern===null? <ErrorScreen action="pobieraniu wzorów" errorMsg={error} onTryAgain={loadPattern}/>:<Editor pattern={pattern} reload={loadPattern}/>}
     </>)
 }

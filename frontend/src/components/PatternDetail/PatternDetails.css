@@ -1,0 +1,15 @@
+.details{
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+}
+.detailPanel{
+    background-color: lavender;
+}
+.detailCanvas{
+    display: inline-block;
+    margin: 0;
+}
+.detailCanvas div{
+    max-width: 100%;
+}

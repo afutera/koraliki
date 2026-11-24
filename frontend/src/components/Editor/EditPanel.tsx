@@ -1,9 +1,7 @@
 import type { ShortColor, BgPicture, Pattern } from "@interfaces/pattern"
 import { type EditorTools, isEditorTool, type EditorLayers } from "@interfaces/enums"
-import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent,  } from "react"
+import { useRef, useState, type ChangeEvent, type MouseEvent,  } from "react"
 import { useLoaderData } from "react-router"
-import { isBackendError } from "@interfaces/errors"
-import EditorPaletteService from "@services/EditorPaletteService"
 import {LayerTypeIcon, LayerIcon, ToolTypeIcon, BigDeleteImgIcon, BigAddImgIcon, BigAddColorIcon } from "@components/Editor/Icons"
 import { type LoaderDataWithPicker,PaletteColorsLoader} from "./EditorPaletteLoaders"
 

@@ -7,6 +7,10 @@ export class SizeUnitConversion{
         if(SizeUnitConversion.converter[unit]==undefined) return 0
         return amt*SizeUnitConversion.converter[unit]
     }
+    static ConvertFromBeads(amt: number, toUnit: SizeUnits): number{
+        if(SizeUnitConversion.converter[toUnit]==undefined) return 0
+        return Math.ceil(amt/SizeUnitConversion.converter[toUnit])
+    }
     static UnitExists(unit: string): unit is SizeUnits{
         return UnitExists(unit)
     }

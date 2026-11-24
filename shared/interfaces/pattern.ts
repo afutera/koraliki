@@ -51,3 +51,9 @@ export interface AddPatternRequest{
     unit: SizeUnits,
     palette: string
 }
+
+export interface SharedPatternWithBeadCount<PatternType extends SharedGalleryPattern<any, any,any>>{
+    pattern: PatternType
+    colorStats: {index: number, count: number, rgb: string, needsBorder: boolean, desc: string}[]
+    sizeStats: {heightBoards:number, widthBoards: number}
+}

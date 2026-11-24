@@ -38,7 +38,7 @@ export default class GalleryPatternService{
          return {pageNo, pageCount, results: resmapped}
     }
 
-    static async MOCK_GetAllMyPatterns(): Promise<GalleryResponse|BackendError>{
+    static async GetAllMyPatterns(): Promise<GalleryResponse|BackendError>{
         const jwt="aaaa"
         try{
             var p= await axios.get<{pageNo: number, pageCount: number,results: [UnmappedShortPattern]}>(import.meta.env.VITE_API_URL+`/patterns/user/me`,{headers: {"auth":jwt}})

@@ -5,6 +5,8 @@ import {PictureFileExists, SavePictureFile} from "@utils/PictureSaver.js"
 import {Readable} from "node:stream"
 import { SizeUnitConversion } from "@utils/SizeUnitConversion.js"
 import PaletteService from "./PaletteService.ts"
+import {SharedPatternWithBeadCount} from "@shared/interfaces/pattern.js"
+import { SizeUnits } from "@shared/interfaces/patternsizeunits.js"
 
 
 export interface PatternsList{
@@ -18,6 +20,8 @@ export interface SavePatternRequest{
     files: Map<string,{stream: Readable, type: string}>
     decoded?:SavePattern
 }
+
+interface PatternWithBeadCount extends SharedPatternWithBeadCount<ShortPattern>{}
 
 class PatternService{
     static readonly PATTERNS_PER_PAGE=20
@@ -94,20 +98,22 @@ class PatternService{
             return p
         }else return 403
     }
-    async getPatternWithBeadCount(pattern: Types.ObjectId|string, user: Types.ObjectId|string|undefined){
+    async getPatternWithBeadCount(pattern: Types.ObjectId|string, user: Types.ObjectId|string|undefined):Promise<PatternWithBeadCount|number>{
         if(this.helpPaletteService===undefined) return 500
         let result=await this.GetPatternForView(pattern,user)
         if(typeof result == "number") return result
+        const heightBoards=SizeUnitConversion.ConvertFromBeads(result.height, SizeUnits.STANDARD_BOARD)
+        const widthBoards=SizeUnitConversion.ConvertFromBeads(result.width, SizeUnits.STANDARD_BOARD)
         let colorStats = new Map<number,number>()
         result.beads.forEach((x)=>{
             colorStats.set(x, (colorStats.get(x) ?? 0)+1)
         })
-        let withcolordata: {index:number,count:number, rgb: string, desc:string}[] = []
+        let withcolordata: {index:number,count:number, rgb: string, desc:string, needsBorder: boolean}[] = []
         for(let col of result.colors){
             let info=await this.helpPaletteService?.getColorDataWithPalette(col.idInPalettes)
-            withcolordata.push({index: col.index, count:colorStats.get(col.index)??0, rgb: col.rgb, desc: info===undefined ? col.name:(info.name+" - "+info.colors.name)})
+            withcolordata.push({index: col.index, count:colorStats.get(col.index)??0, rgb: col.rgb, needsBorder: col.needsBorder, desc: info===undefined ? col.name:(info.name+" - "+info.colors.name)})
         }
-        return {pattern: result, colorStats: withcolordata}
+        return {pattern: result, colorStats: withcolordata, sizeStats: {heightBoards, widthBoards}}
     }
     async CopyPattern(pattern: Types.ObjectId|string, user: Types.ObjectId|string): Promise<Types.ObjectId|404|403>{
         if(typeof pattern ==="string") pattern=new Types.ObjectId(pattern)
@@ -148,7 +154,7 @@ class PatternService{
         await pattern.save()
         return pattern._id
     }
-    async UpdatePattern(id: Types.ObjectId|string, user: Types.ObjectId|string, req: SavePatternRequest, colorcheck: (id:Types.ObjectId|string)=>Promise<boolean>): Promise<true|{code:number,err:string}>{
+    async UpdatePattern(id: Types.ObjectId|string, user: Types.ObjectId|string, req: SavePatternRequest): Promise<true|{code:number,err:string}>{
         if(this.helpPaletteService===undefined) return {code:500, err:"Nie dostarczono palet"}
         for (let f of req.files.entries()) {
             if(f[1].type!=="image/png"&&f[1].type!="image/jpeg") return {code:400,err:`Plik ${f[0]} musi być .png lub .jpg`}
