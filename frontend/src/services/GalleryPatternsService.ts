@@ -68,9 +68,22 @@ export default class GalleryPatternService{
     static async DeletePattern(id: string): Promise<true|BackendError>{
         const jwt="aaaa"
         try{
-            var p= await axios.delete<{_id: string}>(import.meta.env.VITE_API_URL+`/patterns/${id}`,{headers: {"auth":jwt}})
+            var p= await axios.delete(import.meta.env.VITE_API_URL+`/patterns/${id}`,{headers: {"auth":jwt}})
             if(p.status===204){
                 return true
+            }
+            else return {statusCode: p.status, message: "Nieprzewidziany błąd przy pobieraniu wzorów"}
+        }catch(e){
+            if(axios.isAxiosError(e) && e.response) return {statusCode: e.response.status, message: e.response.data.message ?? e.response.data.error  ?? "Nie udało się pobrać wzorów"}
+            else return {statusCode: 500, message: "Nieznany błąd"}
+        }
+    }
+    static async GetPatternPdf(id: string){
+        const jwt="aaaa"
+        try{
+            var p= await axios.get(import.meta.env.VITE_API_URL+`/patterns/${id}/pdf`,{headers: {"auth":jwt}})
+            if(p.status===200&&p.headers["Content-Type"]=="application/pdf"){
+                return URL.createObjectURL(new Blob([p.data]))
             }
             else return {statusCode: p.status, message: "Nieprzewidziany błąd przy pobieraniu wzorów"}
         }catch(e){

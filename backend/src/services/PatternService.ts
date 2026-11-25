@@ -7,6 +7,7 @@ import { SizeUnitConversion } from "@utils/SizeUnitConversion.js"
 import PaletteService from "./PaletteService.ts"
 import {SharedPatternWithBeadCount} from "@shared/interfaces/pattern.js"
 import { SizeUnits } from "@shared/interfaces/patternsizeunits.js"
+import PdfCreator from "@utils/PdfCreator.js"
 
 
 export interface PatternsList{
@@ -97,6 +98,14 @@ class PatternService{
         if(p.author.equals(user)){
             return p
         }else return 403
+    }
+    async GetPatternPdf(patternId: Types.ObjectId|string, user: Types.ObjectId|string|undefined):Promise<Uint8Array|404|403|Error>{
+        const pattern = await this.GetPatternForView(patternId,user)
+        if(typeof(pattern)=="number") return pattern
+        const helper = new PdfCreator(pattern)
+        const pdf= await helper.Pattern2TemplatePdf();
+        if(typeof(pdf)==="string") return new Error(pdf)
+        return pdf
     }
     async getPatternWithBeadCount(pattern: Types.ObjectId|string, user: Types.ObjectId|string|undefined):Promise<PatternWithBeadCount|number>{
         if(this.helpPaletteService===undefined) return 500

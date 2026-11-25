@@ -6,20 +6,40 @@ import ErrorScreen from "../ErrorScreen"
 import { isBackendError } from "@interfaces/errors"
 import "./PatternDetails.css"
 import {BeadForm4Number, BoardForm4Number} from "../../utils/Declination"
+import { useState } from "react"
 
 type PatternDetailLoaderData = {isSuccess:boolean, error:string, data: PatternWithBeadCount|null}
 
 export const PatternDetailLoader = async({params}:LoaderFunctionArgs):Promise<PatternDetailLoaderData>=>{
     if(params.id===undefined) return {isSuccess:false,error:"Nie podano identyfikatora wzoru",data:null}
     const data = await PatternDetailsService.GetPatternDetails(params.id)
-    console.log(data)
     if(isBackendError(data)) return {isSuccess:false,error:data.message,data:null}
     else return {isSuccess:true,error:"",data}
 }
 
 export const PatternDetail = ()=>{
     const loaded=useLoaderData<PatternDetailLoaderData>()
+    const [error,setError] = useState(loaded.error)
     const redirect=useNavigate()
+
+    const downloadDoc = (url:string)=>{
+        console.log(url)
+        const link=document.createElement("a")
+        link.href=url
+        link.download=loaded.data!.pattern.title+".pdf"
+        link.click()
+        //URL.revokeObjectURL(url)
+    }
+
+    const onDownloadInstructions = async ()=>{
+        const pdf = await PatternDetailsService.GetPatternPdf(loaded.data!.pattern._id!);
+                 console.log("pobrano",pdf)
+        if(isBackendError(pdf)) setError(pdf.message)
+        else{
+            setError("")
+            downloadDoc(pdf)
+        }
+    }
 
     if(loaded.isSuccess) return(<div className="d-flex flex-column flex-md-row details">
         <div className="detailPanel container-fluid m-0 col-12 col-md-4">
@@ -27,6 +47,7 @@ export const PatternDetail = ()=>{
             <div className="row"><p className="col-9 col-md-12 col-lg-9">Autor: {loaded.data!.pattern.authorName}</p>
             <p className="col-3 col-md-12 col-lg-3 text-end text-md-start text-lg-end">&#9734;{loaded.data!.pattern.rating}</p>
             </div>
+            <div className="row"><button className="btn btn-primary col-4" onClick={onDownloadInstructions}>Pobierz jako PDF</button></div>
             <h2>Dane obrazu</h2>
             <div className="row"><strong className="col-3 col-md-12 col-lg-3">Wysokość: </strong><span className="col-9 col-md-12 col-lg-9">{BeadForm4Number(loaded.data!.pattern.height)} ({BoardForm4Number(loaded.data!.sizeStats.heightBoards)})</span></div>
             <div className="row"><strong className="col-3 col-md-12 col-lg-3">Szerokość: </strong><span className="col-9 col-md-12 col-lg-9">{BeadForm4Number(loaded.data!.pattern.width)} ({BoardForm4Number(loaded.data!.sizeStats.widthBoards)})</span></div>
@@ -39,5 +60,5 @@ export const PatternDetail = ()=>{
         </div>
         <div className="detailCanvas col-12 col-md-8"><ReadOnlyCanvas pattern={loaded.data!.pattern}/></div>
     </div>)
-    return (<ErrorScreen action="pobieraniu wzoru" errorMsg={loaded.error} onTryAgain={()=>redirect("")}/>)
+    return (<ErrorScreen action="pobieraniu wzoru" errorMsg={error} onTryAgain={()=>redirect("")}/>)
 }

@@ -26,6 +26,7 @@
     "@fastify/schedule": "^7.0.2",
     "@fastify/static": "^10.1.7",
     "@types/bcrypt": "^6.0.0",
+    "@types/pdfkit": "^0.17.7",
     "ajv": "^8.20.0",
     "ajv-i18n": "^4.2.0",
     "bcrypt": "^6.0.0",
@@ -33,6 +34,7 @@
     "fastify": "^5.12.5",
     "fastify-plugin": "^6.0.1",
     "mongoose": "^9.11.1",
+    "pdfkit": "^0.21.0",
     "toad-scheduler": "^4.2.0",
     "ts-node": "^10.9.2"
   }

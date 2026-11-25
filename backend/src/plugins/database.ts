@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Fastify from "fastify";
+import Fastify, {FastifyError} from "fastify";
 import fastifyPlugin from "fastify-plugin";
 import { paletteSchema } from "@schemas/Palette.js";
 import { userSchema } from "@schemas/User.js";
@@ -18,8 +18,8 @@ const database = async (fastify: Fastify.FastifyInstance, opt: Object) =>{
     }
     try{
       await mongoose.connect(process.env.DB_URL!,{connectTimeoutMS:8000})
-    }catch{
-      fastify.log.error("Nie udalo się polaczyc z baza danych")
+    }catch(error){
+      fastify.log.error("Nie udalo się polaczyc z baza danych"+(Error.isError(error)?(": "+error.message):""))
       process.exit(1)
     }
     fastify.log.info("Polaczono z baza danych")
