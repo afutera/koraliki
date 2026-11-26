@@ -1,5 +1,5 @@
 import {Schema, Types} from "mongoose";
-import {SharedEditPattern, SharedGalleryPattern, SharedPatternColor, type SharedImage} from "@shared/interfaces/pattern.js"
+import {SharedEditPattern, SharedGalleryPattern, SharedPatternColor, type SharedImage, type SharedPatternWithBeadCount} from "@shared/interfaces/pattern.js"
 
 interface ImageType extends SharedImage<Types.ObjectId> {}
 
@@ -13,6 +13,7 @@ interface PatternTypeInternal extends PatternTypeEdit{
     ratingsSum: number
 }
 interface ShortPattern extends SharedGalleryPattern<Types.ObjectId,string,PatternColorType> {}
+interface PatternWithBeadCount extends SharedPatternWithBeadCount<ShortPattern>{}
 
 
 const patternSchema =new Schema<PatternTypeInternal>({
@@ -42,4 +43,4 @@ const patternSchema =new Schema<PatternTypeInternal>({
     beads: {type: Schema.Types.Map, of: Schema.Types.Int32}
 })
 
-export { patternSchema, type PatternTypeEdit, type PatternTypeInternal, type ImageType, type PatternColorType, type ShortPattern }
+export { patternSchema, type PatternTypeEdit, type PatternTypeInternal, type ImageType, type PatternColorType, type ShortPattern, type PatternWithBeadCount }

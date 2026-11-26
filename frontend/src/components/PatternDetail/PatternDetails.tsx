@@ -23,22 +23,23 @@ export const PatternDetail = ()=>{
     const redirect=useNavigate()
 
     const downloadDoc = (url:string)=>{
+        setError("")
         console.log(url)
         const link=document.createElement("a")
         link.href=url
         link.download=loaded.data!.pattern.title+".pdf"
         link.click()
-        //URL.revokeObjectURL(url)
     }
 
     const onDownloadInstructions = async ()=>{
         const pdf = await PatternDetailsService.GetPatternPdf(loaded.data!.pattern._id!);
-                 console.log("pobrano",pdf)
         if(isBackendError(pdf)) setError(pdf.message)
-        else{
-            setError("")
-            downloadDoc(pdf)
-        }
+        else downloadDoc(pdf)
+    }
+    const onDownloadBeadList = async ()=>{
+        const pdf = await PatternDetailsService.GetBeadcountPdf(loaded.data!.pattern._id!);
+        if(isBackendError(pdf)) setError(pdf.message)
+        else downloadDoc(pdf)
     }
 
     if(loaded.isSuccess) return(<div className="d-flex flex-column flex-md-row details">
@@ -47,7 +48,10 @@ export const PatternDetail = ()=>{
             <div className="row"><p className="col-9 col-md-12 col-lg-9">Autor: {loaded.data!.pattern.authorName}</p>
             <p className="col-3 col-md-12 col-lg-3 text-end text-md-start text-lg-end">&#9734;{loaded.data!.pattern.rating}</p>
             </div>
-            <div className="row"><button className="btn btn-primary col-4" onClick={onDownloadInstructions}>Pobierz jako PDF</button></div>
+            <div className="row"><button className="btn btn-secondary col-3 col-md-10 col-lg-3 m-1 fs-6" onClick={onDownloadInstructions}>Pobierz</button>
+            <button className="btn btn-secondary col-4 col-md-10 col-lg-4 m-1" disabled>Dodaj do ulubionych</button>
+            <div className="col-4 col-md-10 col-lg-4 m-1 text-end text-md-start text-lg-end"><input type="number" min="0" max="" className="col-6"></input><button className="btn btn-secondary col-6" disabled>Oceń</button></div>
+            </div>
             <h2>Dane obrazu</h2>
             <div className="row"><strong className="col-3 col-md-12 col-lg-3">Wysokość: </strong><span className="col-9 col-md-12 col-lg-9">{BeadForm4Number(loaded.data!.pattern.height)} ({BoardForm4Number(loaded.data!.sizeStats.heightBoards)})</span></div>
             <div className="row"><strong className="col-3 col-md-12 col-lg-3">Szerokość: </strong><span className="col-9 col-md-12 col-lg-9">{BeadForm4Number(loaded.data!.pattern.width)} ({BoardForm4Number(loaded.data!.sizeStats.widthBoards)})</span></div>
@@ -57,6 +61,7 @@ export const PatternDetail = ()=>{
                     <span className="col-9"><span style={{backgroundColor:c.rgb, border:(c.needsBorder? "2px solid black":"none")}}>&nbsp;&nbsp;</span>&nbsp;{c.desc}</span>
                     <span className="col-3 text-end">{c.count}</span></li>)
             }</ul>
+            <div className="row"><button className="btn btn-secondary col-4" onClick={onDownloadBeadList}>Pobierz listę</button></div>
         </div>
         <div className="detailCanvas col-12 col-md-8"><ReadOnlyCanvas pattern={loaded.data!.pattern}/></div>
     </div>)

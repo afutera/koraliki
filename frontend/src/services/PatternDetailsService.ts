@@ -23,9 +23,15 @@ export default class PatternDetailsService{
         }
     }
     static async GetPatternPdf(id: string): Promise<string|BackendError>{
+        return await this.GetPdfFromApi(import.meta.env.VITE_API_URL+`/patterns/${id}/pdf`)
+    }
+    static async GetBeadcountPdf(id: string): Promise<string|BackendError>{
+        return await this.GetPdfFromApi(import.meta.env.VITE_API_URL+`/patterns/${id}/ingredients`)
+    }
+    private static async GetPdfFromApi(url:string): Promise<string|BackendError>{
         const jwt="aaaa"
         try{
-            var p= await axios.get(import.meta.env.VITE_API_URL+`/patterns/${id}/pdf`,{headers: {"auth":jwt,"Accept":"application/pdf"},responseType: 'blob'})
+            var p= await axios.get(url,{headers: {"auth":jwt,"Accept":"application/pdf"},responseType: 'blob'})
             if(p.status===200&&p.headers["content-type"]=="application/pdf") {
                 console.log(p.data)
                 return URL.createObjectURL(p.data)

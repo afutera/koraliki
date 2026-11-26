@@ -1,15 +1,30 @@
 import PDFDocument from "pdfkit"
-import { ShortPattern } from "@schemas/Pattern.js"
+import { ShortPattern, PatternWithBeadCount } from "@schemas/Pattern.js"
 import {join} from "path"
+import {SizeUnitConversion} from "@utils/SizeUnitConversion.js"
+import { SizeUnits } from "@shared/interfaces/patternsizeunits.js"
 
 const PAGE_HEIGHT_BEADS=55, PAGE_WIDTH_BEADS=40, BEAD_SIZE=14.17
 const FONT = join(import.meta.dirname,"..","resource","Tinos-Regular.ttf")
 
+const hasBeadCount = (pattern: any): pattern is PatternWithBeadCount=>{
+    return !(pattern["colorStats"]===undefined || pattern["sizeStats"]===undefined)
+}
+
 export default class PdfCreator{
     readonly pattern: ShortPattern
+    readonly colorCounts: {index:number, count: number, rgb:string, needsBorder:boolean, desc:string}[]
+    readonly noOfBoards?: number
 
-    constructor(pattern: ShortPattern){
-        this.pattern=pattern
+    constructor(pattern: ShortPattern|PatternWithBeadCount){
+        if(hasBeadCount(pattern)){
+            this.pattern=pattern.pattern
+            this.colorCounts = pattern.colorStats
+            this.noOfBoards = pattern.sizeStats.heightBoards*pattern.sizeStats.widthBoards
+        }else{
+            this.pattern=pattern
+            this.colorCounts=[]
+        }
     }
 
     async Pattern2TemplatePdf():Promise<Uint8Array|string>{
@@ -31,6 +46,41 @@ export default class PdfCreator{
         const getContent=this.toBuffer(doc)
         this.registerFont(doc)
         pages.forEach((row,i)=>{row.forEach((map,j)=>{this.WritePage(doc,map,i+1,j+1,widthPages,heightPages)})})
+        doc.save()
+        doc.end()
+        try{
+            return await getContent
+        }catch(e){console.log("blad",e);return "Błąd przy konwersji do PDF"}
+    }
+    async Pattern2IngredientsPdf(){
+        if(this.noOfBoards===undefined) return "Nie pobrano danych opisowych"
+        const doc=new PDFDocument({info:{Title:"Lista składników wzoru "+this.pattern.title},size:"A4"})
+        const getContent=this.toBuffer(doc)
+        this.registerFont(doc)
+        const PAGESIZE = doc.page.height-doc.page.margins.bottom
+        const FONTSIZE= doc._fontSize;
+        doc.fontSize(FONTSIZE*1.5).text(`Lista elementów wzoru "${this.pattern.title}"`).fontSize(FONTSIZE)
+        doc.text(`Autor: ${this.pattern.authorName}`)
+        doc.fontSize(FONTSIZE*1.5).text("Składniki:").fontSize(FONTSIZE)
+        const BEADS_IN_BOARD = SizeUnitConversion.Convert2Beads(SizeUnits.STANDARD_BOARD,1)
+        const boards = `${this.noOfBoards} x standardowa podkładka ${BEADS_IN_BOARD}x${BEADS_IN_BOARD}`
+        let liststart = doc.y
+        const x =doc.page.width-doc.page.margins.right-1.5*FONTSIZE
+        let y=doc.y+doc.heightOfString(boards,{width:x})
+        const listitems=[boards]
+        //const boxes:{y:number,fill:string,stroke:boolean}[] = []
+        for(let color of this.colorCounts){
+            const li = `${color.count} x ${color.desc}`
+            listitems.push(li)
+            doc.fillColor(color.rgb).strokeColor(color.needsBorder? "black":color.rgb).rect(x,y,FONTSIZE,FONTSIZE).fillAndStroke()
+            y+=doc.heightOfString(li,{width:x})
+            if(y>PAGESIZE){
+                doc.addPage({size:"A4"})
+                y=y-doc.page.height
+            }
+        }
+        doc.switchToPage(0)
+        doc.fillColor("black").list(listitems,doc.page.margins.left,liststart,{listType:"bullet", width:x-doc.page.margins.left})
         doc.save()
         doc.end()
         try{

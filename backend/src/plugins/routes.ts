@@ -59,6 +59,16 @@ async function routes (fastify: Fastify.FastifyInstance, opt: Object) {
         res.code(200).type("application/pdf").send(result)
       }
   })
+  fastify.get<IdParams>("/patterns/:id/ingredients",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtCheckButAllow])}, async (req,res)=>{
+      const service= new PatternService(models["patterns"])
+      service.setPaletteService(new PaletteService(models["palettes"]))
+      const result = await service.GetPatternIngredientsPdf(req.params.id, req.currentUser===undefined ? undefined:req.currentUser!._id);
+      if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":"Obraz prywatny innego użytkownika"})
+      else if(Error.isError(result)) res.code(500).send({message: result.message})
+      else{
+        res.code(200).type("application/pdf").send(result)
+      }
+  })
   fastify.get<IdParams>("/patterns/:id",{schema: idSchema.schema, preHandler: fastify.auth([fastify.jwtCheckButAllow])}, async (req,res)=>{
       const result = await new PatternService(models["patterns"]).GetPatternForView(req.params.id, req.currentUser===undefined ? undefined:req.currentUser!._id);
       if(typeof result == "number") res.code(result).send({message: result==404 ? "Nie znaleziono obrazu":"Obraz prywatny innego użytkownika"})

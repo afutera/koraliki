@@ -27,3 +27,23 @@ export const addPatternSchema = {
       }
     }
 }
+//edycja przychodzi w stringu jako JSON i pliki osobno, walidacja nie w fastify, tylko w dekodowaniu
+/*username: {type: Schema.Types.String, required: true, unique: true},
+    email: {type: Schema.Types.String, required: true, unique: true},
+    password: {type: Schema.Types.String, required: true}, */
+const passwdSchema={
+  type: "string",
+  minLength: 10
+}
+export const addUserSchema = {
+  body:{type:"object",
+    additionalProperties:false,
+    required:["username","email","password","repeatPassword"],
+    properties:{
+        username:{type:"string",minLength:1, maxLength: 30},
+        email:{type:"string"},
+        password: passwdSchema,
+        repeatPassword: passwdSchema
+    }
+  }
+}

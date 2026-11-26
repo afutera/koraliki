@@ -61,11 +61,11 @@ const updatePatternSchema={
     },
     required: ["_id", "title", "isPublic", "colors", "beads", "pictures"]
 }
+const ajv = new Ajv()
+const validate=ajv.compile(updatePatternSchema)
 
 export default function decode(jsonPattern: string): SavePattern|Error{
     try{
-    const ajv = new Ajv()
-    const validate=ajv.compile(updatePatternSchema)
     var objPattern: any
     try{
         objPattern=JSON.parse(jsonPattern)

@@ -1,13 +1,13 @@
 import { Model, Types } from "mongoose"
-import { type PatternTypeEdit, type PatternTypeInternal, type PatternColorType, type ShortPattern } from "@schemas/Pattern.js"
-import DecodePattern, { type SavePattern, type SavePatternImage} from "@utils/PatternJsonDecoder.js"
+import { type PatternTypeEdit, type PatternTypeInternal, type PatternWithBeadCount, type ShortPattern } from "@schemas/Pattern.js"
+import DecodePattern, { type SavePattern} from "@utils/PatternJsonDecoder.js"
 import {PictureFileExists, SavePictureFile} from "@utils/PictureSaver.js"
 import {Readable} from "node:stream"
 import { SizeUnitConversion } from "@utils/SizeUnitConversion.js"
 import PaletteService from "./PaletteService.ts"
-import {SharedPatternWithBeadCount} from "@shared/interfaces/pattern.js"
 import { SizeUnits } from "@shared/interfaces/patternsizeunits.js"
 import PdfCreator from "@utils/PdfCreator.js"
+import { pattern } from "pdfkit"
 
 
 export interface PatternsList{
@@ -21,8 +21,6 @@ export interface SavePatternRequest{
     files: Map<string,{stream: Readable, type: string}>
     decoded?:SavePattern
 }
-
-interface PatternWithBeadCount extends SharedPatternWithBeadCount<ShortPattern>{}
 
 class PatternService{
     static readonly PATTERNS_PER_PAGE=20
@@ -104,6 +102,14 @@ class PatternService{
         if(typeof(pattern)=="number") return pattern
         const helper = new PdfCreator(pattern)
         const pdf= await helper.Pattern2TemplatePdf();
+        if(typeof(pdf)==="string") return new Error(pdf)
+        return pdf
+    }
+    async GetPatternIngredientsPdf(patternId: Types.ObjectId|string, user: Types.ObjectId|string|undefined){
+        const pattern = await this.getPatternWithBeadCount(patternId,user)
+        if(typeof(pattern)=="number") return pattern
+        const helper = new PdfCreator(pattern)
+        const pdf = await helper.Pattern2IngredientsPdf();
         if(typeof(pdf)==="string") return new Error(pdf)
         return pdf
     }
